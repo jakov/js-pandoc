@@ -93,7 +93,7 @@ function Markdown(text) {
     var md_flag_StripLinkDefinitions_Z = "9082c5d1b2ef05415b0a1d3e43c2d7a6";
     var md_reg_StripLinkDefinitions = new RegExp(
       '^[ ]{0,' + md_less_than_tab + '}\\[(.+)\\]:'
-    + 	'[ \\t]*'
+    +     '[ \\t]*'
     + 	'\\n?'
     + 	'[ \\t]*'
     + '<?(\\S+?)>?'
