@@ -878,12 +878,79 @@ function Markdown(text) {
     
     var md_flag_DoLists_z = "8ac2ec5b90470262b84a9786e56ff2bf";
     
+	//jakov
+
+function linum2int(input) { //jakob
+	input = input.replace(/[^A-Za-z]/, '');
+	output = 0;
+	for (i = 0; i < input.length; i++) {
+		output = output * 26 + parseInt(input.substr(i, 1), 26 + 10) - 9;
+	}
+	console.log('linum', output);
+	return output;
+}
+
+function int2linum(input) { //jakob
+	// There's a quicker function that does the same on stackoverflow, but i wrote this one myself and im not sure about the license of the other one
+	// http://stackoverflow.com/questions/8603480/how-to-create-a-function-that-converts-a-number-to-a-bijective-hexavigesimal/11506042#11506042
+	var zeros = 0;
+	var next = input;
+	var generation = 0;
+	while (next >= 27) {
+		next = (next - 1) / 26 - (next - 1) % 26 / 26;
+		zeros += next * Math.pow(27, generation);
+		generation++;
+	}
+	output = (input + zeros).toString(27).replace(/./g, function ($0) {
+		return '_abcdefghijklmnopqrstuvwxyz'.charAt(parseInt($0, 27));
+	});
+	return output;
+}
+
+function roman2int(input) { //jakob
+
+	romans = {
+		'm': 1000,
+		'd': 500,
+		'c': 100,
+		'l': 50,
+		'x': 10,
+		'v': 5,
+		'i': 1
+	};
+	input = input.replace(/[^A-Za-z]/, '').toLowerCase();
+	output = 0;
+	highest = false;
+	for (i = input.length - 1; i >= 0; i--) {
+		num = romans[input.substr(i, 1)] || 0;
+		highest = (num > highest ? num : highest);
+		output = (num < highest ? (output - num) : (output + num));
+	}
+	return output;
+}
+
+function int2roman(number) {
+	// http://www.blackwasp.co.uk/NumberToRoman_2.aspx
+	result = "";
+	values = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
+	numerals = ["m", "cm", "d", "cd", "c", "xc", "l", "xl", "x", "ix", "v", "iv", "i"];
+
+	for (i = 0; i < 13; i++) {
+		while (number >= values[i]) {
+			number -= values[i];
+			result += numerals[i];
+		}
+	}
+	return result;
+}
+
+	//endjakov
+
     function _DoLists( text ) {
         var md_marker_ul = '[*+-]';
-        var md_marker_ol = '\\d+[.]';
+        var md_marker_ol = '\\d+[.]|[(]?\\d+[)]|[(]?\\d+[.][)]|[(]?[A-Za-z]+[)]|[A-Z]+[.][ ]|[a-z]+[.]|[MDCXLVI]+[.][ ]|[mdcxlvi]+[.]';
         var md_markers = new Array( md_marker_ul, md_marker_ol );
-        
-        
+
         for( var i = 0, len = md_markers.length; i < len; i++ ) {
             var marker = md_markers[i];
             
@@ -918,12 +985,17 @@ function Markdown(text) {
                 $2 = $2.replace( md_flag_DoLists_z, "" );
                 var list = $2;
                 var list_type = $4.match( new RegExp( md_marker_ul ) ) != null ? "ul" : "ol";
+				if(list_type=="ol"){
+					if($4.match( /[a-z]+[)]/i) ){params = ' type="'+($4.toLowerCase()==$4 ? 'a':'A')+'" start="'+linum2int($4)+'"';}
+					else if($4.match( /[mdcxlvi]+[.]/i) ){params = ' type="'+($4.toLowerCase()==$4 ? 'i':'I')+'" start="'+roman2int($4)+'"';}
+					else {params= ' start="'+$4.replace(/\W/, '')+'"';}
+					}
                 var marker = ( list_type == "ul" ? md_marker_ul : md_marker_ol );
                 
                 list = list.replace( /\n{2,}/g, "\n\n\n" );
                 var result = _ProcessListItems( list, marker );
                 
-                result = "<" + list_type + ">\n" + result + "</" + list_type + ">";
+                result = "<" + list_type + params +">\n" + result + "</" + list_type + ">";
                 $1 = ( $1 ) ? $1 : "";
                 return $1 + "\n" + _HashBlock( result ) + "\n\n";
             } );
