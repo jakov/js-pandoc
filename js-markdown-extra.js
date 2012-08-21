@@ -93,7 +93,7 @@ function Markdown(text) {
     var md_flag_StripLinkDefinitions_Z = "9082c5d1b2ef05415b0a1d3e43c2d7a6";
     var md_reg_StripLinkDefinitions = new RegExp(
       '^[ ]{0,' + md_less_than_tab + '}\\[(.+)\\]:'
-    +     '[ \\t]*'
+    + 	'[ \\t]*'
     + 	'\\n?'
     + 	'[ \\t]*'
     + '<?(\\S+?)>?'
@@ -986,10 +986,10 @@ function int2roman(number) {
                 var list = $2;
                 var list_type = $4.match( new RegExp( md_marker_ul ) ) != null ? "ul" : "ol";
 				if(list_type=="ol"){
-					if($4.match( /[a-z]+[)]/i) ){params = ' type="'+($4.toLowerCase()==$4 ? 'a':'A')+'" start="'+linum2int($4)+'"';}
-					else if($4.match( /[mdcxlvi]+[.]/i) ){params = ' type="'+($4.toLowerCase()==$4 ? 'i':'I')+'" start="'+roman2int($4)+'"';}
-					else {params= ' start="'+$4.replace(/\W/, '')+'"';}
-					}
+					if($4.match( /[a-z]+[)]/i) ){var params = ' type="'+($4.toLowerCase()==$4 ? 'a':'A')+'" start="'+linum2int($4)+'"';}
+					else if($4.match( /[mdcxlvi]+[.]/i) ){var params = ' type="'+($4.toLowerCase()==$4 ? 'i':'I')+'" start="'+roman2int($4)+'"';}
+					else {var params = ' start="'+$4.replace(/\W/, '')+'"';}
+				} else {var params = '';}
                 var marker = ( list_type == "ul" ? md_marker_ul : md_marker_ol );
                 
                 list = list.replace( /\n{2,}/g, "\n\n\n" );
