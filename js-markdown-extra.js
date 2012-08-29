@@ -1123,7 +1123,7 @@ function Markdown(text) {
 		                html += (colspan > 1 ? ' colspan="' + colspan + '"' : '');
 		                html += (rowspan > 1 ? ' rowspan="' + rowspan + '"' : '');
 		                html += '>\n';
-		                html += text;
+		                html += _RunBlockGamut( text );
 		                html += (header ? '</th>' : '</td>');
 		                console.log(html);
 
