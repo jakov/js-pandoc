@@ -19,7 +19,7 @@
           <a id="forkme_banner" href="https://github.com/jakov/js-pandoc">Fork Me on GitHub</a>
 
           <h1 id="project_title">js-pandoc</h1>
-          <h2 id="project_tagline">PHP-Markdown-extra compatible Javascript markdown syntax parser</h2>
+          <h2 id="project_tagline">Pandoc compatible Javascript markdown syntax parser</h2>
 
           <section id="downloads">
             <a class="zip_download_link" href="https://github.com/tanakahisateru/js-pandoc/zipball/master">Download this project as a .zip file</a>
@@ -31,34 +31,38 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <p>ver 1.0<br>
-based on PHP Markdown Extra 1.01<br>
+        
+<p>
+is a fork of JS Markdown Extra<br>
+developed by <a href="http://tanakahisateru.github.com/js-markdown-extra/">tanakahisateru</a></p>
+<p>
+which is based on JS Markdown Extra 1.01<br>
 originally developed by <a href="http://bmky.net/product/js-markdown-extra/">boumankan</a></p>
+<p>
+which implements the PHP Markdown Extra Syntax <br>
+by Michel Fortin, which you can test it here: <a href="http://www.michelf.com/projects/php-markdown/dingus/">PHP Markdown Extra demo</a></p>
 
 <h3>What's this?</h3>
 
-<p>js-pandoc is a experimental JapaScript port of PHP Markdown Extra.</p>
+<p>js-pandoc is *going to be* a JavaScript port of Pandoc</p>
 
-<p><a href="http://www.michelf.com/projects/php-markdown/dingus/">PHP Markdown Extra demo</a></p>
+<p><a href="http://johnmacfarlane.net/pandoc/README.html">Pandoc</a> (you can also <a href="http://johnmacfarlane.net/pandoc/try">try it online</a>)</p>
 
-<p>I couldn't retain complete comaptibility because of difference between PHP's
-regular expression and JavaScript's one, but it can convert most of simple
-markdown text.
-<strong>perhaps</strong>.</p>
+<p>I will try to create complete compatibility.</p>
 
 <h3>Demo</h3>
 
-<p>You can try in your hand.</p>
+<p>You can try it yourself on the</p>
 
 <p><a href="demo.html">Demo page</a></p>
 
 <h3>How to use</h3>
 
-<p>Load this script in HTML and call <code>Markdown</code> function.</p>
+<p>Load this script in HTML and call <code>Pandoc</code> function.</p>
 
 <div class="highlight">
 <pre>    <span class="c1">//example :</span>
-    <span class="kd">var</span> <span class="nx">html</span> <span class="o">=</span> <span class="nx">Markdown</span><span class="p">(</span> <span class="nx">text</span> <span class="p">);</span>
+    <span class="kd">var</span> <span class="nx">html</span> <span class="o">=</span> <span class="nx">Pandoc</span><span class="p">(</span> <span class="nx">text</span> <span class="p">);</span>
 </pre>
 </div>
 
@@ -68,6 +72,7 @@ markdown text.
 <li><a href="http://daringfireball.net/projects/markdown/">Markdown</a></li>
 <li><a href="http://www.michelf.com/projects/php-markdown/">PHP Markdown &amp; PHP Markdown Extra</a></li>
 <li><a href="http://rephrase.net/box/js-markdown/">js-markdown</a></li>
+<li><a href="http://tanakahisateru.github.com/js-markdown-extra/">js-markdown-extra</a></li>
 </ul>
 
 <h3>License</h3>
@@ -86,7 +91,7 @@ markdown text.
     <!-- FOOTER  -->
     <div id="footer_wrap" class="outer">
       <footer class="inner">
-        <p class="copyright">js-pandoc maintained by <a href="https://github.com/tanakahisateru">tanakahisateru</a></p>
+        <p class="copyright">js-pandoc maintained by <a href="https://github.com/jakov">jakov</a></p>
         <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>
