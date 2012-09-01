@@ -30,7 +30,8 @@
  * @param text Markdown text
  * @return HTML
  */
-function Markdown(text) {
+function Pandoc(text) {
+	pandoc = true;
 
     /* Utilities */
     function Array_pad(target, size, value) {
@@ -512,8 +513,10 @@ function Markdown(text) {
         text = _DoAutoLinks( text );
         text = _EncodeAmpsAndAngles( text );
         text = _DoItalicsAndBold( text );
-        text = text.replace( /[ ]{2,}\n/g, "<br" + md_empty_element_suffix + "\n" );
-        
+		text = text.replace( /[ ]{2,}\n/g, "<br" + md_empty_element_suffix + "\n" );
+        if(pandoc){
+        	text = text.replace( /\\\n/g, "<br" + md_empty_element_suffix + "\n" );
+        }
         return text;
     }
     
@@ -767,31 +770,23 @@ function Markdown(text) {
     var md_flag_DoTables = "9882b282ede0f5af55034471410cfc46";
     var md_reg_DoTables1 = new RegExp(
       '^'
-    + '[ ]{0,' + md_less_than_tab + '}' 
-    + 	'[|]'							// |header |header |
-    + 	'(.+)\\n'
-    + '[ ]{0,' + md_less_than_tab + '}' 
-    + 	'[|]([ ]*[-:]+[-| :]*)\\n'		// |-------|-------|
-    + '('								// |content|content|
+    + '[ ]{0,' + md_less_than_tab + '}'
+    + '('								
     + 	'(?:'
-    + 		'[ ]*'
-    + 		'[|].*\\n'
+    + 		'(?:[|\'].*|.*[|\'].*)\\n'			// |content|content|
+    +       '(?:(?:[\\!].*|.*[\\!].*)\\n)*'		// !more   !more   !
     + 	')*'
+    + ')'
+    + '('
+    + 	'(?:[ ]*[-:]*[|+][-=|+ :]*)\\n'			// |-------|=======| or ------|======
+	+ ')'
+    + '('								
+    + 	'(?:'
+    + 		'(?:[|\'].*|.*[|\'].*)\\n'			// |content|content|
+    +       '(?:(?:[\\!].*|.*[\\!].*)\\n)*'		// !more   !more   !
+    + 	')+'
     + ')'
     + '(?=\\n|' + md_flag_DoTables + ')'//Stop at final double newline.
-    , "gm" );
-    var md_reg_DoTables2 = new RegExp(
-      '^'
-    + '[ ]{0,' + md_less_than_tab + '}'
-    + '(\\S.*[|].*)\\n'					// header |header
-    + '[ ]{0,' + md_less_than_tab + '}'
-    + '([-:]+[ ]*[|][-| :]*)\\n'		// -------|-------
-    + '('								// content|content
-    + 	'(?:'
-    + 		'.*[|].*\\n'
-    + 	')*'
-    + ')'
-    + '(?=\\n|' + md_flag_DoTables + ')'
     , "gm" );
     function _DoTables( text ) {
         
@@ -799,16 +794,10 @@ function Markdown(text) {
         var reg = md_reg_DoTables1;
         
         text = text.replace( reg, function( $0, $1, $2, $3 ) {
-            $3 = $3.replace( /^[ ]*[|]/gm, '' );
+        	console.clear();
+        	//console.log('0'+$0, '\n1'+$1, '\n2'+$2, '\n3'+$3 );
             return _DoTable_callback( $0, $1, $2, $3 );
         } );
-        
-        text = text.replace( md_flag_DoTables, "" );
-        
-        text += md_flag_DoTables;
-        var reg = md_reg_DoTables2;
-        
-        text = text.replace( reg, _DoTable_callback );
         
         text = text.replace( md_flag_DoTables, "" );
         
@@ -821,24 +810,130 @@ function Markdown(text) {
         var content		= $3;
         
         head		= head.replace( /[|][ ]*$/gm, '' );
-        underline	= underline.replace( /[|][ ]*$/gm, '' );
+        underline	= underline.replace( /[|][ ]*$/gm, '' ).replace( /[ ]*/gm, '' ).replace( /[=]/g, '-' );
         content		= content.replace( /[|][ ]*$/gm, '' );
         
-        var separators	= underline.split( /[ ]*[|][ ]*/ );
+        var separators	= underline.split( /[ ]*[|+][ ]*/ );
         
         var attr = new Array( );
         
         for( var i = 0, len = separators.length; i < len; i++ ) {
             var separator = separators[i];
-            if ( separator.match( /^[ ]*-+:[ ]*$/ ) ) attr.push( ' align="right"' );
-            else if ( separator.match( /^[ ]*:-+:[ ]*$/ ) ) attr.push( ' align="center"' );
-            else if ( separator.match( /^[ ]*:-+[ ]*$/ ) ) attr.push( ' align="left"' );
+            if ( separator.match( /^[ ]*[-=]+:[ ]*$/ ) ) attr.push( ' align="right"' );
+            else if ( separator.match( /^[ ]*:[-=]+:[ ]*$/ ) ) attr.push( ' align="center"' );
+            else if ( separator.match( /^[ ]*:[-=]+[ ]*$/ ) ) attr.push( ' align="left"' );
             else attr.push( '' );
         }
         
-        head		= _DoCodeSpans( head );
+        //head		= _DoCodeSpans( head );
         
-        var headers		= head.split( /[ ]*[|][ ]*/ );
+        
+
+		var h_align_all = [];
+		var v_align_all = '';
+        var head_rows = head.replace(/^[ ]*(?![|\'\!])/gm, '|').replace(/[|\'\!\n]*$/, '').split( /\n/ );
+        var underline = underline.replace(/^[ ]*(?![|\'\!])/gm, '|').replace(/[|\'\!\n]*$/, '');
+        var content_rows = content.replace(/^[ ]*(?![|\'\!])/gm, '|').replace(/[|\'\!\n]*$/, '').split(/\n/);
+        var und = head_rows.length;
+        console.log(und);
+        var table = [].concat(head_rows, underline, content_rows);
+        //var thead = [];
+        //var tbody = [];
+        
+        var object = [];
+        //var area = 'thead';
+        
+        //output = '<table>\n';
+        rownum = 0;
+        for(y=0, rows_len = table.length; y < rows_len; y++ ){
+        	//row = '';
+        	/*if(y==0 && y<und){
+        		rownum = 0;
+        		//output += '<thead>\n';
+        	}
+        	else if(y==und+1){
+        		rownum = 0;
+        		//output += '<tbody>\n';
+        	}*/
+			object[rownum] = [];
+        	  	
+        	// split before the seperator that is not followed by another seperator
+        	table[y] = table[y].split(/(?=[|\'!][^|\'!])/);
+        	colnum = 0;
+        	advance = false;
+        	for(x=0, cols_len = table[y].length; x < cols_len; x++ ){
+					td = {};
+	        		raw = table[y][x];
+	        		[, s, l, text, r, z] = raw.match(/^([|\'!])([:;]?)(.*?)([:;]?)([|\'!]*)$/);
+	        		
+	        		switch(s){
+	        			case "|":
+	        				advance = true;
+							td.raw = raw;
+							td.text = text;
+							td.colnum = colnum;
+							td.rownum = rownum;
+							td.colspan = z.length+1;
+							
+							h_align_srt = (l == ':' && r == ':' ? 'center' : l == ':' ? 'left' : r == ':' ? 'right' : 'default');
+							h_align_end = (l == ';' && r == ';' ? 'center' : l == ';' ? 'left' : r == ';' ? 'right' : 'default');
+							
+							if (h_align_srt != 'default') {
+								h_align = h_align_srt;
+								h_align_all[x] = h_align_srt;
+							} else if (h_align_end != 'default') {
+								h_align = h_align_end;
+								h_align_all[x] = 'default';
+							} else {
+								h_align = h_align_all[x] || 'default';
+							}
+							
+							td.h_align = h_align;
+		
+							console.log(y, x, s,l,text,r,z.length+1, h_align);
+							
+							object[rownum][colnum] = td;
+							colnum += td.colspan;		
+	        				break;
+	        			case "'":
+							object[rownum-1][colnum].rowspan ++;
+	        			case "!":
+							object[rownum-1][colnum].raw += '\n'+raw;
+							object[rownum-1][colnum].text += '\n'+text;
+							height = object[rownum-1][colnum].text.split(/\n/).length;
+							[, s, l, text, r, z] = raw.match(/^([|\'!])([:;]?)(.*?)([:;]?)([|\'!]*)$/);
+							if(height==2){
+								
+							}
+							
+							console.log(object[rownum-1][colnum].text);							
+	        				break;
+	        		}
+	        		
+
+					//row += _RunBlockGamut( text );
+        	}
+        	
+			/*if(y!=und){
+        	output+= '<tr class="'+(rownum % 2 == 0 ? 'odd' : 'even')+'">'+row+'</tr>\n';
+        	}*/
+        	
+        	if(advance){
+        		rownum++;
+        	}
+        	
+           	/*if(y==und){
+        		output += '</thead>\n';
+        	}
+        	else if(y==rows_len-1){
+        		output += '</tbody>\n';
+        	}*/
+        }
+        //output += '</table>';
+        //console.log(output);
+
+
+        var headers		= head.split( /[|\']+/ );
         var col_count	= headers.length;
         
         var text = "<table>\n";
@@ -897,7 +992,6 @@ function Markdown(text) {
     , "gm" );
 
     function _DoGrids( text ) {
-        
         text += md_flag_DoGrids;
         var reg = md_reg_DoGrids1;
         
@@ -908,18 +1002,29 @@ function Markdown(text) {
         } );
         
         text = text.replace( md_flag_DoGrids, "" );
-
         return text;
     }
     
     function _DoGrid_callback( $0, $1, $2, $3, $4 ) {
+    	debug = false;
 		//console.clear();
-		console.log(new Date());
-		html5 = true;
+		if(debug){console.log(new Date());}
+		html5 = false;
+		default_h_align = 'left';
+		default_v_align = 'default';
 		markdown = false;
 		String.prototype.regexIndexOf = function (regex, startpos) {
 		    var indexOf = this.substring(startpos || 0).search(regex);
 		    return (indexOf >= 0) ? (indexOf + (startpos || 0)) : indexOf;
+		}
+		Array.prototype.regexIndexOf = function (regex, startpos = 0) {
+			len = this.length;
+			for(x = startpos; x < len; x++){
+				if(typeof this[x] != 'undefined' && (''+this[x]).match(regex)){
+					return x;
+				}
+			}
+			return -1;
 		}
 		arr = $2.split('\n');
 		longest = 0;
@@ -936,22 +1041,24 @@ function Markdown(text) {
 		    longest = arr[i].length;
 		    r = 0;
 		    x2 = -1;
+		    
+		    if(debug){console.warn(i);}
 		    while (arr[i].indexOf('+', r) >= 0) {
 		        ind = arr[i].indexOf('+', r);
 
 		        if (i > 1) {
-
+					if(debug){console.log(indices.join(''));}
 		            x1 = ind * 1 || 0;
-		            x2 = indices.join('').regexIndexOf(/\d/, ind + 1) * 1 || 0;
+		            x2 = indices.regexIndexOf(/\d/, ind + 1) * 1 || 0;
 		            y1 = indices[ind] * 1 || 0;
 		            y2 = i * 1 || 0;
 
 		            if (x2 < 0) {
-		                console.warn('end of columns');
+		                if(debug){console.warn('end of columns');}
 		                rows[rows.length] = i;
 		                break;
 		            } else {
-		                console.info([x1, y1], [x2, y2]);
+		                if(debug){console.info([x1, y1], [x2, y2]);}
 		            }
 
 		            //  a    | 
@@ -962,21 +1069,27 @@ function Markdown(text) {
 		            b = arr[y2].charAt(x2 - 1);
 		            c = arr[y2].charAt(x2 + 1);
 		            d = arr[y2 + 1].charAt(x2);
-
+		            
 		            colspan = 1;
 		            while (arr[y2].charAt(x2).match(/[ -]/) || (
-		            a == ' ' && b.match(/[-=:;]/) && c.match(/[-=:;]/) && d.match(/[|=:; ]|$/))) {
+		            //  a    _ 
+					// b+c  -+-
+					//  d    # 
+		            a == ' '
+		            && b.match(/[-=:;]/) && c.match(/[-=:;]/)
+		            && d.match(/[|=:; ]|$/))
+		            ) {
 		                if (a == ' ' && b.match(/[-=:;]/) && c.match(/[-=:;]/) && d.match(/[|=:; ]|$/)) {
 		                    indices[x2] = i;
 		                    console.warn(a + '\n' + b + arr[y2].charAt(x2) + c + '\n' + d);
 		                }
 		                colspan++;
-		                x2 = indices.join('').regexIndexOf(/\d/, x2 + 1) * 1;
+		                x2 = indices.regexIndexOf(/\d/, x2 + 1) * 1;
 		                a = arr[y2 - 1].charAt(x2);
 		                b = arr[y2].charAt(x2 - 1);
 		                c = arr[y2].charAt(x2 + 1);
 		                d = arr[y2 + 1].charAt(x2);
-		                console.log([x1, y1], [x2, y2], colspan);
+		                if(debug){console.log([x1, y1], [x2, y2], colspan);}
 		            }
 
 
@@ -1015,10 +1128,17 @@ function Markdown(text) {
 
 
 		            if (
-		            arr[y2].charAt(x2) == '+' && a.match(/[ |=:;+]/) && b.match(/[ -=:;+]/) &&
-
-		            !(
-		            a.match(/[|=:;]/) && b == ' ' && c.match(/[-=:; ]|$/) && d.match(/[|=:;]/)) // see rowspan example; b is "_" and c is "#"
+		            arr[y2].charAt(x2) == '+'
+		            && a.match(/[ |=:;+]/)
+		            && b.match(/[ -=:;+]/)
+		            && !(
+		            	//  a    | 
+						// b+c  _+#
+						//  d    | 
+		            	a.match(/[|=:;]/)
+		            	&& b == ' ' && c.match(/[-=:; ]|$/)
+		            	&& d.match(/[|=:;]/)
+		            )
 		            &&
 		            border['bottom'].match(/^[-+=:; ]+$/) // see "J" in the example
 		            ) {
@@ -1085,6 +1205,10 @@ function Markdown(text) {
 		                } else {
 		                    h_align = h_align_all[ind] || 'default';
 		                }
+		                
+		                if(h_align == 'default' && default_h_align){
+		                	h_align = default_h_align;
+		                }
 
 		                v_align_srt = (t == ':' && b == ':' ? 'middle' : t == ':' ? 'top' : b == ':' ? 'bottom' : border['left'].match(/^[|=+ ]+[:]+[|=+ ]+$/) ? 'middle' : 'default');
 		                v_align_end = (t == ';' && b == ';' ? 'middle' : t == ';' ? 'top' : b == ';' ? 'bottom' : border['left'].match(/^[|=+ ]+[;]+[|=+ ]+$/) ? 'middle' : 'default');
@@ -1098,12 +1222,13 @@ function Markdown(text) {
 		                } else {
 		                    v_align = v_align_all[i] || 'default';
 		                }
-
-		                header = border['bottom'].indexOf('=') > -1 || border['right'].indexOf('=') > -1;
-		                if (header) {
-		                    console.log('HEADER');
+		                
+		                if(v_align == 'default' && default_v_align){
+		                	v_align = default_v_align;
 		                }
 
+		                header = border['bottom'].indexOf('=') > -1 || border['right'].indexOf('=') > -1;
+		                
 		                //console.log(rows, rows.length-rows.indexOf(y1));
 		                rowspan = rows.length - rows.indexOf(y1);
 
@@ -1122,14 +1247,29 @@ function Markdown(text) {
 		                }
 		                html += (colspan > 1 ? ' colspan="' + colspan + '"' : '');
 		                html += (rowspan > 1 ? ' rowspan="' + rowspan + '"' : '');
-		                html += '>\n';
-		                html += _RunBlockGamut( text );
+		                html += '>';
+		                text = text.replace(/[ ]*$/gm, ''); // otherwise "  " would trigger <br/>
+		                block = _RunBlockGamut( text );
+		                // if the block only consists of the first paragraph
+		                if( (block.match(/^<p>[\s\S]*?<\/p>/) || [''])[0].length == block.length){
+		                	// strip away the <p>
+		                	block = block.replace(/^<p>|<\/p>$/g, '');
+		                }
+						html += block;
 		                html += (header ? '</th>' : '</td>');
-		                console.log(html);
+						if(debug){console.log(html);}
 
 		                table[y1] = table[y1] || [];
 		                table[y1][x1] = html;
-		            } else {
+		                
+		                if(debug){console.log(ind, i);}
+		                
+						while (indices.length < ind) {
+							indices.push('_');
+						}
+						indices[ind] = i;
+						//indices_change = true;
+		            } else if(debug){
 		                console.error('');
 		                if (!border['bottom'].match(/^[-+=:; ]+$/)) {
 		                    blanks = '';
@@ -1140,35 +1280,47 @@ function Markdown(text) {
 		                } else {
 		                    console.log(' ' + a + ' \n' + b + arr[y2].charAt(x2) + c + '\n ' + d + ' ');
 		                }
-		                break;
 		            }
 		        }
 
-		        if (i > 1 || typeof indices[ind] == 'undefined') {
+		        if (/*i > 1 || */typeof indices[ind] == 'undefined') {
+		        	if(debug){console.log('initializing');}
 		            while (indices.length < ind) {
 		                indices.push('_');
 		            }
 		            indices[ind] = i;
 		            //indices_change = true;
-		            console.log(indices);
+		            if(debug){console.log(indices);}
 		        }
 
 		        r = (x2 < 0 ? ind + 1 : x2);
-		        console.log('ind:' + ind, 'x2:' + (x2 < 0 ? ind + 1 : x2));
+		        if(debug){console.log('ind:' + ind, 'x2:' + (x2 < 0 ? ind + 1 : x2));}
 		    }
 		}
 
 		output = '<table>\n';
-		output += '<caption>' + ($1 || $4) + '</caption>\n';
+		output += ( ($1 || $4) ? '<caption>' + _RunSpanGamut($1 || $4) + '</caption>\n' : '');
+		
 		rownum = 0;
 		colnum = 0;
 		thead = 1;
 		// <col width="8%" />
+		columns = 80;
+		prevind = 0;
+		total = indices.length;
+		divisor = ( total > columns ? total : columns );
+		for (x = 0; x < total; x++) {
+			if (indices[x] != '_' && x > 0) {
+				output += '<col width="'+ Math.round( (x-prevind)*100/divisor ) +'%" />\n';
+				
+				prevind = x;
+			}
+		}
 		for (y = 0; y < table.length; y++) {
 		    if (typeof table[y] != 'undefined') {
 		        row = '';
-		        row += '<tr class="' + (rownum % 2 == 0 ? 'odd' : 'even') + '">\n';
-		        rownum++;
+
+		        
 		        for (x = 0; x < table[y].length; x++) {
 		            if (typeof table[y][x] != 'undefined') {
 		                row += table[y][x] + '\n';
@@ -1180,22 +1332,38 @@ function Markdown(text) {
 		                colnum++;
 		            }
 		        }
+		        rownum++;
+		        
+		        if(thead>=3){
+			        row = '<tr class="' + (rownum % 2 == 0 ? 'odd' : 'even') + '">\n' + row;
+		        }
+		        else{
+		        	row = '<tr>\n' + row;
+		        }
+		        
+		        
 		        if (thead == 1) {
 		            row = '<thead>\n' + row;
 		            thead = 2;
 		        } else if (thead == 3) {
 		            row = '</thead>\n<tbody>\n' + row;
-		            thead = 0;
+		            thead = 5;
 		            rownum = 0; // reset the rownumbering for the tbody
 		        } else if (thead == 4) {
 		            row = '<tbody>\n' + row;
-		            thead = 0;
+		            thead = 5;
 		        }
 		        row += '</tr>\n';
 		        output += row;
 		    }
 		}
-		output += '</tbody>\n</table>';
+		
+		if (thead==2){
+			output += '</thead>\n<tbody>\n</tbody>\n';
+		} else if(thead==5){
+			output += '</tbody>\n';
+		}
+		output += '</table>';
 		output += ($1 ? '\n' + $3 : ''); // spit out the superfluous second table caption
 		console.log(output);
         
@@ -1725,6 +1893,7 @@ function int2roman(number) {
     var md_reg_esc_period    = /\\\./g;
     var md_reg_esc_exclamation = /\\\!/g;
     var md_reg_esc_colon     = /\\\:/g;
+    var md_reg_esc_bar       = /\\\|/g;
     function _EncodeBackslashEscapes( text ) {
         return text
         .replace( md_reg_esc_backslash,		"7f8137798425a7fed2b8c5703b70d078" )
@@ -1741,6 +1910,7 @@ function int2roman(number) {
         .replace( md_reg_esc_period,		"5058f1af8388633f609cadb75a75dc9d" )
         .replace( md_reg_esc_exclamation,	"9033e0e305f247c0c3c80d0c7848c8b3" )
         .replace( md_reg_esc_colon,			"853ae90f0351324bd73ea615e6487517" )
+        //.replace( md_reg_esc_bar,			"eb486741c1df3f489d857e41773b1e87" )
         ;
     }
     
@@ -1803,6 +1973,7 @@ function int2roman(number) {
     var md_reg_md5_period      = /5058f1af8388633f609cadb75a75dc9d/g;
     var md_reg_md5_exclamation = /9033e0e305f247c0c3c80d0c7848c8b3/g;
     var md_reg_md5_colon       = /853ae90f0351324bd73ea615e6487517/g;
+    var md_reg_md5_bar         = /eb486741c1df3f489d857e41773b1e87/g;
     
     function _UnescapeSpecialChars( text ) {
         return text
@@ -1820,6 +1991,7 @@ function int2roman(number) {
         .replace( md_reg_md5_period,      "." )
         .replace( md_reg_md5_exclamation, "!" )
         .replace( md_reg_md5_colon,       ":" )
+        //.replace( md_reg_md5_bar,       "|" )
         ;
     }
     
