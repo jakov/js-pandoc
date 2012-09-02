@@ -1,3 +1,5 @@
+idea for parallel viewing: put an `<a>` element to the position of the cursor.
+
 FirstHeader|SecondHeader
 -------------|-------------
 ContentCell|ContentCell
@@ -28,6 +30,21 @@ th | Phone     |   $12 |
    | Pipe             ||
 ===+-----------+------:+
 ft | footer    | asdf  |
+
+
+th | Item      | Value |
+===+-----------+------:+
+th |: * Computer  | $1600 |
+   '  * Computer
+   '  * Computer
+th | Phone     |   $12 |
+   ^ Phone     |;$12   |
+   ^ Phone     | $12   |
+   | Pipe             ||
+===+-----------+------:+
+ft | footer    | asdf  |
+
+
 
 th ? td | td | td
 

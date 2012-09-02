@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>js-markdown-extra test</title>
-  <script src="js-markdown-extra.js"></script>
+  <script src="js-pandoc.js"></script>
   <style type="text/css">
   #result table, #result th, #result td { border: 1px solid gray; }
   #result pre, #result code { background: #EEE; }
@@ -19,6 +19,12 @@ PHRASE EMPHASIS
 ---------------
 *italic*   **bold**  
 _italic_   __bold__
+
+### Pandoc
+
+~~strikethrough~~
+subscript: H~2~O
+superscript: 2^10^ = 1024
 
 LINKS
 ---------------
@@ -141,9 +147,17 @@ The footnote doesn't have to be a number[^nonumber].
 [^1]: Told you it'd be here at the bottom.
 [^nonumber]: See, not a number.
              Though it does appear as a number in the html's ordered list.
+             
+### Pandoc
 
-Table
------------------
+Here is an inline note.^[Inlines notes are easier to write, since
+you don't have to pick an identifier and move down to type the
+note.]
+
+Markdown Style Tables
+---------------------
+
+this should not have empty cells before it:
 
 |a |b |c
 |--|--|--
@@ -161,6 +175,251 @@ alignment
 -----:|:-----|:------:
  0001 | 2    | 003
    4  | 0005 |  6
+   
+
+### My extensions
+
+Use ``'`` to add text to the cell above.
+This allows for block elements inside the table!
+
+|a |b             |c
+|--|--------------|--
+|1 |Write in more |3
+'1 'than one line '3
+
+
+
+Use `^` to add text to the cell above *and* extend the **rowspan**:
+
+|a        |b      |c
+|---------|-------|--
+|vertical |awsome |3
+^span     |great  |6
+
+
+Use more than one ``|`` (or ``^`` or ``'``) to extend the **colspan**
+(This is inspired by Multimarkdown):
+
+|combined || c 
+|----|----|---
+|1   |2   |3  
+| 4  | 5 & 6 ||
+
+
+Use ``=``s to make the whole column to ``&lt;th&gt;``s:
+
+a   |b |c
+====|--|--
+th1 |2 |3
+th4 |5 |6
+
+
+Use a second row with `-` to get `&lt;tfoot&gt;` (like `&lt;thead&gt;`):
+
+a |b |c
+--|--|--
+1 |2 |3
+4 |5 |6
+--|--|--
+x |y |z
+
+Use `;` next to the the end of the cell to set *single cell* align: 
+
+a     |b     |c
+------|------|--
+right;|2     |;center;|
+4     |;left |6
+
+The same applies for vertical align:
+
+|a      |b      |c
+|-------|-------|--
+|right ;|2      |;center;|
+'...    '       '        '
+'middle;'       ' top    '
+|4      | left  |6
+'       ';bottom'
+
+Like in Markdown Extra, you can set align for the rest of the column with `:`.
+You can do this in any cell, not just in the `-----` line.
+It gets stopped by the next single cell align.
+
+|right :|default| c
+|-------|:------|--------
+|  right|left   | 3
+|  right|left   | 6
+|;left  |left   |:center:
+|default|left   | center
+
+Again, the same applies for vertical align, only that it sets the
+vertical align for the rest of the *row*.
+
+/*
+|a      |b      |c
+|-------|-------|--
+|right ;|2      |;center;|
+'...    '       '        '
+'middle;'       ' top    '
+|4      | left  |6
+'       ';bottom'
+*/
+
+Pandoc Style Tables
+---------------------
+
+### Gridtables
+
++---+---+
+| a | b |
++===+===+
+| c | d |
++---+---+
+
++---+---+---+
+| A | B | C |
++---+---+---+
+| D | E | F |
++---+---+---+
+| G | H | I |
++---+---+---+
+
+
+
+#### My extensions
+
+Gridless tables:
+
++   +   +   +
+  A   B   C  
++   +   +   +
+  D   E   F  
++   +   +   +
+  G   H   I  
++   +   +   +
+
+Forcing spanning cells (combines B & E):
+
++   +   +   +
+  A   B | C  
++   +   +   +
+  D   E | F  
++   +   +   +
+  G   H   I  
++   +   +   +
+
+
+Forcing spanning cells (combines D & E):
+
++   +   +   +
+  A   B   C  
++   +   +   +
+  D   E   F  
++  -+-  +   +
+  G   H   I  
++   +   +   +
+
+Combination test:
+B gets ignored, because it looks like a rowspan in line 1, then D & E spans past B.
+
++   +   +   +
+  A   B | C  
++   +   +   +
+  D   E | F  
++  -+-  +   +
+  G   H   I  
++   +   +   +
+
+
+
+Automatic Rowspan and Colspan. If any symbol that my not normally appear in a border gets
+in between the border, it is interpreted as a spanning cell.
+
+vertically:
+(Bug: why additionaly line at the bottom)
+
++---+---+---+  
+| A | B | C |  
++---+ J +---+  
+| D | E | F |  
++---+---+---+  
+| G | H | I |  
++---+---+---+
+
+
+without borders:
+
++   +   +   +
+  A   B   C  
++   + J +   +
+  D   E   F  
++   +   +   +
+  G   H   I  
++   +   +   +
+
+
+horizontally:
+(Bug: This should get a horizontal span!!!)
+
++---+---+---+ 
+| A | B | C | 
++---+---+---+ 
+| D J E | F | 
++---+---+---+ 
+| G | H | I | 
++---+---+---+ 
+
+without borders:
+
++   +   +   +
+  A   B   C  
++   +   +   +
+  D J E   F  
++   +   +   +
+  G   H   I  
++   +   +   +
+
+##### text-align
+
+The borders of the gridtable must consist of the
+following characters: `-` for horizontal lines, `|` (for
+vertical lines), `=` (for headers), `:` (for sticky alignment),
+`;` (for single alignment) or space (for automatic lines).
+
+###### horizontal alignment
+
+`;----` will align the cell below it *left*.\
+`----;` will align the cell below it *right*.\
+`;---;` will align the cell below it *justified*.[^centervsjust]\
+`--;--` will align the cell below it *centered*; the ';'
+can be anywhere in the middle.[^centervsjust]\
+(`;--"."--`, `--"."--;`, `;--"."--;`, `--;"."--` or
+ `.;----`, `-----;.`, `.;----;.`, `--;.;--` are planned
+to align the cell below it *to the char* between the `"`s.)
+
+[^centervsjust]: im not yet sure how to solve this problem.
+
+* If you use `:` instead of `;`, all of the following cells in
+the same *column* will be aligned until another single cell
+alignment stops it again.
+
+###### vertical alignment
+
+`;||||` will align the cell right to it *top*.\
+`||||;` will align the cell right to it *bottom*.\
+`;|||;` will align the cell right to it *middle*.\
+`||;||` will align the cell right to it *middle*; the ';'
+can be anywhere in the middle.
+
+* If you use `:` instead of `;`, all of the following cells in
+the same *row* will be aligned until another single cell
+alignment stops it again.
+
+ 
+
+
+
+
+
 
 Definition list
 -----------------
@@ -227,7 +486,7 @@ Markdow enabled inside HTML when marked by markdown="1" attribute.
             .replace(/>/g, '&gt;') + '</pre>');
         document.write('<hr/>');
         */
-        document.write(Markdown(mdtext));
+        document.write(Pandoc(mdtext));
       </script>
     </div>
   </div>
