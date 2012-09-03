@@ -19,16 +19,17 @@ ContentCell|ContentCell
 
 ----
 
+
 th | Item      | Value |
-===+-----------+------:+
+===|-----------|------:|
 th |: * Computer  | $1600 |
-   \  * Computer
-   \  * Computer
+   ^  * Computer
+   ^  * Computer
 th | Phone     |   $12 |
    ' Phone     |;$12   |
    ' Phone     | $12   |
    | Pipe             ||
-===+-----------+------:+
+===|-----------|------:|
 ft | footer    | asdf  |
 
 
@@ -70,6 +71,8 @@ th | Item      | Value |
 ===+-----------+------:+
 ft | footer    | asdf  |
 
+
+gridtables:
 
 +-----------+-------+
 | Item      | Value | thead
