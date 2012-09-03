@@ -32,6 +32,7 @@
  */
 function Pandoc(text) {
 	pandoc = true;
+	strict = false;
 
     /* Utilities */
     function Array_pad(target, size, value) {
@@ -770,22 +771,37 @@ function Pandoc(text) {
     var md_flag_DoTables = "9882b282ede0f5af55034471410cfc46";
     var md_reg_DoTables1 = new RegExp(
       '^'
+    + '('
+    + '[ ]{0,' + md_less_than_tab + '}'
+    + 	'(?:Table[:]|[:]).*?\\n'				// captionabove
+    + 	'\\n'
+    + ')?'
     + '[ ]{0,' + md_less_than_tab + '}'
     + '('								
     + 	'(?:'
-    + 		'(?:[|\'].*|.*[|\'].*)\\n'			// |content|content|
-    +       '(?:(?:[\\!].*|.*[\\!].*)\\n)*'		// !more   !more   !
-    + 	')*'
-    + ')'
-    + '('
-    + 	'(?:[ ]*[-:]*[|+][-=|+ :]*)\\n'			// |-------|=======| or ------|======
+    + 		'(?:(?:[|^].*|.*[|^].*)\\n)'			// |content|content|
+    +       '(?:(?:[\'].*|.*[\'].*)\\n)*'		// !more   !more   !
+    + 	')*?'
+    + 	'(?:[ ]*[-=|:]*[|][-=|:]*)\\n'			// |-------|=======| or ------|======
 	+ ')'
     + '('								
     + 	'(?:'
-    + 		'(?:[|\'].*|.*[|\'].*)\\n'			// |content|content|
-    +       '(?:(?:[\\!].*|.*[\\!].*)\\n)*'		// !more   !more   !
-    + 	')+'
+    + 		'(?:(?:[|^].*|.*[|^].*)\\n)'			// |content|content|
+    +       '(?:(?:[\'].*|.*[\'].*)\\n)*?'		// !more   !more   !
+    + 	')+?'
     + ')'
+    + '(?:('
+    + 	'(?:[ ]*[-=|:]*[|][-=|:]*)\\n'			// |-------|=======| or ------|======							
+    + 	'(?:'
+    + 		'(?:(?:[|^].*|.*[|^].*)\\n)'			// |content|content|
+    +       '(?:(?:[\'].*|.*[\'].*)\\n)*'		// !more   !more   !
+    + 	')*'
+    + '))?'
+    + '('
+    + '[ ]{0,' + md_less_than_tab + '}'
+    + 	'\\n'
+    + 	'(?:Table[:]|[:]).*?\\n'				// captionbelow
+    + ')?'
     + '(?=\\n|' + md_flag_DoTables + ')'//Stop at final double newline.
     , "gm" );
     function _DoTables( text ) {
@@ -793,10 +809,10 @@ function Pandoc(text) {
         text += md_flag_DoTables;
         var reg = md_reg_DoTables1;
         
-        text = text.replace( reg, function( $0, $1, $2, $3 ) {
+        text = text.replace( reg, function( $0, $1, $2, $3, $4, $5 ) {
         	console.clear();
-        	//console.log('0'+$0, '\n1'+$1, '\n2'+$2, '\n3'+$3 );
-            return _DoTable_callback( $0, $1, $2, $3 );
+        	//console.log('0:\n'+$0, '\n\n1:\n'+$1, '\n\n2:\n'+$2, '\n\n3:\n'+$3 );
+            return _DoTable_callback( $0, $1, $2, $3, $4, $5 );
         } );
         
         text = text.replace( md_flag_DoTables, "" );
@@ -804,48 +820,72 @@ function Pandoc(text) {
         return text;
     }
     
-    function _DoTable_callback( $0, $1, $2, $3 ) {
-        var head		= $1;
-        var underline	= $2;
-        var content		= $3;
-        
-        head		= head.replace( /[|][ ]*$/gm, '' );
-        underline	= underline.replace( /[|][ ]*$/gm, '' ).replace( /[ ]*/gm, '' ).replace( /[=]/g, '-' );
-        content		= content.replace( /[|][ ]*$/gm, '' );
-        
-        var separators	= underline.split( /[ ]*[|+][ ]*/ );
-        
-        var attr = new Array( );
-        
-        for( var i = 0, len = separators.length; i < len; i++ ) {
-            var separator = separators[i];
-            if ( separator.match( /^[ ]*[-=]+:[ ]*$/ ) ) attr.push( ' align="right"' );
-            else if ( separator.match( /^[ ]*:[-=]+:[ ]*$/ ) ) attr.push( ' align="center"' );
-            else if ( separator.match( /^[ ]*:[-=]+[ ]*$/ ) ) attr.push( ' align="left"' );
-            else attr.push( '' );
-        }
-        
-        //head		= _DoCodeSpans( head );
-        
-        
+    function _DoTable_callback( $0, captionabove = '', head = '', body = '', foot = '', captionbelow = '' ) {
 
+		var head_rows = head.split( /\n/ );
+		var body_rows = body.split( /\n/ );
+		var foot_rows = foot.split( /\n/ );
+		
+		head_rows.pop();
+		body_rows.pop();
+		foot_rows.pop();
+		console.log('captionabove',captionabove);
+		console.log(head_rows.join('\n'));
+		console.log(body_rows.join('\n'));
+		console.log(foot_rows.join('\n'));
+		console.log('captionbelow',captionbelow);
+		
+//         var underline = head_rows[head_rows.length-1].replace(/^[ ]*(?![|^'])/gm, '|').replace(/[|^'\n]*$/, '');
+//         var overline  = foot_rows[0].replace(/^[ ]*(?![|^'])/gm, '|').replace(/[|^'\n]*$/, '').split(/\n/);
+
+var underline = head_rows.length;
+var und = underline;
+var overline = underline + body_rows.length +1;
+console.log('underline:', underline, 'overline:', overline);
+        
+        //underline	= underline.replace( /[|][ ]*$/gm, '' ).replace( /[ ]*/gm, '' ).replace( /[=]/g, '-' );
+        //content		= content.replace( /[|][ ]*$/gm, '' );
+        
 		var h_align_all = [];
 		var v_align_all = '';
-        var head_rows = head.replace(/^[ ]*(?![|\'\!])/gm, '|').replace(/[|\'\!\n]*$/, '').split( /\n/ );
-        var underline = underline.replace(/^[ ]*(?![|\'\!])/gm, '|').replace(/[|\'\!\n]*$/, '');
-        var content_rows = content.replace(/^[ ]*(?![|\'\!])/gm, '|').replace(/[|\'\!\n]*$/, '').split(/\n/);
-        var und = head_rows.length;
-        console.log(und);
-        var table = [].concat(head_rows, underline, content_rows);
+		
+		v_header = [];
+
+        var table = [].concat(head_rows, body_rows, foot_rows);
         //var thead = [];
         //var tbody = [];
         
         var object = [];
         //var area = 'thead';
         
-        //output = '<table>\n';
-        rownum = 0;
+        theadsize = 0;
+        tbodysize = 0;
+        tfootsize = 0;
+        
+        rownum = 1;
+        object[0] = []; //this enables you to even start your table with `'` or `^` cells (in case you get loonatic)
+        
+        function fillrowuntil(rownum, colnum){
+        	tn = {};
+        	beforelength = object[rownum].length;
+        	console.log(beforelength);
+        	
+        	for(pointer = (object[rownum][beforelength-1] ? object[rownum][beforelength-1].colnum : 0); pointer < colnum; pointer ++){
+        		tn.raw = '|';
+				tn.text = ' ' + '\n';
+				tn.colnum = pointer;
+				tn.rownum = rownum;
+				tn.colspan = 1;
+				tn.rowspan = 1;
+				tn.h_align = 'default';
+				
+				object[rownum].push(tn);
+				console.warn('this row was extended to be able to put the content somewhere');
+			}
+        }
+        
         for(y=0, rows_len = table.length; y < rows_len; y++ ){
+			console.info('y:', y);
         	//row = '';
         	/*if(y==0 && y<und){
         		rownum = 0;
@@ -856,25 +896,25 @@ function Pandoc(text) {
         		//output += '<tbody>\n';
         	}*/
 			object[rownum] = [];
-        	  	
-        	// split before the seperator that is not followed by another seperator
-        	table[y] = table[y].split(/(?=[|\'!][^|\'!])/);
+        
+        	table[y] = table[y]
+        	//remove trailing spaces and the last bar
+        	.replace( /[|^'][ \n]*$/gm, '' )
+        	//remove leading spaces and add first bar if needed
+        	.replace(/^[ ]*(?![|^'])/gm, '|')
+        	// split before the seperator that is not followed by another seperator (which is needed for colspan!)
+			.split(/(?=[|^'][^|^'])/);
+        	console.log(table[y]);
         	colnum = 0;
         	advance = false;
         	for(x=0, cols_len = table[y].length; x < cols_len; x++ ){
+        			console.warn('x:', x);
 					td = {};
 	        		raw = table[y][x];
-	        		[, s, l, text, r, z] = raw.match(/^([|\'!])([:;]?)(.*?)([:;]?)([|\'!]*)$/);
+	        		[, s, l, text, r, z] = raw.match(/^([|^'])([:;]?)(.*?)([:;]?)([|^']*)$/);
 	        		
 	        		switch(s){
 	        			case "|":
-	        				advance = true;
-							td.raw = raw;
-							td.text = text;
-							td.colnum = colnum;
-							td.rownum = rownum;
-							td.colspan = z.length+1;
-							
 							h_align_srt = (l == ':' && r == ':' ? 'center' : l == ':' ? 'left' : r == ':' ? 'right' : 'default');
 							h_align_end = (l == ';' && r == ';' ? 'center' : l == ';' ? 'left' : r == ';' ? 'right' : 'default');
 							
@@ -888,27 +928,69 @@ function Pandoc(text) {
 								h_align = h_align_all[x] || 'default';
 							}
 							
-							td.h_align = h_align;
-		
-							console.log(y, x, s,l,text,r,z.length+1, h_align);
-							
-							object[rownum][colnum] = td;
-							colnum += td.colspan;		
-	        				break;
-	        			case "'":
-							object[rownum-1][colnum].rowspan ++;
-	        			case "!":
-							object[rownum-1][colnum].raw += '\n'+raw;
-							object[rownum-1][colnum].text += '\n'+text;
-							height = object[rownum-1][colnum].text.split(/\n/).length;
-							[, s, l, text, r, z] = raw.match(/^([|\'!])([:;]?)(.*?)([:;]?)([|\'!]*)$/);
-							if(height==2){
+	        				if(!(y+1==underline || y+1==overline)){
+	        					fillrowuntil(rownum, colnum-1);
+	        				
+	        					advance = true;
+								td.raw = raw;
+								td.text = text + '\n';
+								td.colnum = colnum;
+								td.rownum = rownum;
+								td.colspan = z.length+1;
+								td.rowspan = 1;
+								td.h_align = h_align;
 								
+								console.log(y, x, s,l,text,r,z.length+1, h_align);
+								
+								object[rownum][colnum] = td;
+								
+								colnum += td.colspan;		
+	        				}
+	        				else{
+	        					if(text.match(/[=]/)){
+	        						v_header[colnum] = true;
+	        						console.log(v_header);
+	        					}
+	        					colnum += z.length+1;
+	        				}
+	        			break;
+	        			case "^":
+	        				if(!(y+1==underline || y+1==overline)){
+	        					console.log(object[rownum-1].length-1,colnum);
+	        					fillrowuntil(rownum-1, colnum);
+	        				
+	        					if(colnum<object[rownum-1].length){
+	        						object[rownum-1][colnum].rowspan ++;	
+	        					}
+								else{
+									console.error('cannot extend rowspan of nonexisting cell');
+								}
 							}
-							
-							console.log(object[rownum-1][colnum].text);							
-	        				break;
+	        			case "'":
+	        				if(!(y+1==underline || y+1==overline)){
+	        					fillrowuntil(rownum-1, colnum);
+	        				
+	        					if(colnum<object[rownum-1].length){
+	        						object[rownum-1][colnum].raw += raw + '\n';
+									object[rownum-1][colnum].text += text+ '\n';
+									height = object[rownum-1][colnum].text.split(/\n/).length;
+									[, s, l, text, r, z] = raw.match(/^([|^'])([:;]?)(.*?)([:;]?)([|^']*)$/);
+									if(height==2){
+										//vertical align
+									}
+									
+									console.log(object[rownum-1][colnum].text);		
+	        					}
+								else{
+									console.error('cannot put content into nonexisting cell');
+									
+								}					
+								colnum += z.length+1;
+							}
+	        			break;
 	        		}
+	        		
+
 	        		
 
 					//row += _RunBlockGamut( text );
@@ -917,10 +999,27 @@ function Pandoc(text) {
 			/*if(y!=und){
         	output+= '<tr class="'+(rownum % 2 == 0 ? 'odd' : 'even')+'">'+row+'</tr>\n';
         	}*/
-        	
         	if(advance){
         		rownum++;
         	}
+        	
+			if(y+1==underline-1){
+        		console.error('y:', y);
+        		theadsize = rownum;
+        		console.log('theadsize:',theadsize);
+        	}
+        	else if(y+1==overline-1){
+        		console.error('y:', y);
+        		tbodysize = rownum - theadsize;
+				console.log('tbodysize:',tbodysize);
+        	}
+        	else if(y==rows_len-1){
+           		console.error('y:', y);
+        		tfootsize = rownum - theadsize - tbodysize;
+				console.log('tfootsize:',tfootsize);     		
+        	}
+
+        	
         	
            	/*if(y==und){
         		output += '</thead>\n';
@@ -929,43 +1028,54 @@ function Pandoc(text) {
         		output += '</tbody>\n';
         	}*/
         }
-        //output += '</table>';
-        //console.log(output);
+        
+        
+        spitoutabove = captionabove;
+        spitoutbelow = captionbelow;
+	
+		 captionabove = captionabove.replace(/^Table[:]|[:]/, '').trim();
+		 captionbelow = captionbelow.replace(/^Table[:]|[:]/, '').trim();
+		 
+		 captionabove = (captionabove=='' ? false : captionabove );
+		 captionbelow = (captionbelow=='' ? false : captionbelow );
+        
+        console.log(captionabove);
+        console.log(captionbelow);
 
-
-        var headers		= head.split( /[|\']+/ );
-        var col_count	= headers.length;
+        output = '';
+        output += (captionabove ? '' : spitoutabove + '\n' ); //spit out the first table header if it doesnt contain anything
+        output += '<table>\n';
         
-        var text = "<table>\n";
-        text += "<thead>\n";
-        text += "<tr>\n";
-        
-        for( var i = 0, len = headers.length; i < len; i++ )
-            text += "  <th" + attr[i] + ">" + _RunSpanGamut(String_trim(headers[i])) + "</th>\n";
-        
-        text += "</tr>\n";
-        text += "</thead>\n";
-        
-        var rows = String_trim(content, "\n").split(/\n/);
-        
-        text += "<tbody>\n";
-        
-        for( var i = 0, len = rows.length; i < len; i++ ) {
-            var row = rows[i];
-            
-            var row = _DoCodeSpans( row );
-            var row_cells = row.split( /[ ]*[|][ ]*/, col_count );
-            Array_pad(row_cells, col_count, "");
-            
-            text += "<tr>\n";
-            for( var x = 0, len2 = row_cells.length; x < len2; x++ )
-                text += "  <td" + attr[x] + ">" + _RunSpanGamut(String_trim(row_cells[x])) + "</td>\n";
-            
-            text += "</tr>\n";
+        output += ( (captionabove || captionbelow ) ? '<caption>' + _RunSpanGamut(captionabove || captionbelow) + '</caption>\n' : '');
+        theadbodyfootsize = object.length;
+        for(rownum in object){
+        	
+        	//output += '<'+(rownum<theadsize ? 'thead' : rownum<theadbodysize ?  'tbody': 'tfoot')+'>\n';
+			output += (theadsize && rownum==0 ? '<thead>\n' : rownum==theadsize ? '<tbody>\n': rownum==theadsize+tbodysize ? '<tfoot>\n': '');
+			output += '<tr>\n';
+			for(colnum in object[rownum]){
+				td = object[rownum][colnum];
+				block = _RunBlockGamut( td.text.replace(/[ ]*$/gm, '') );
+				// if the block only consists of the first paragraph
+				if( (block.match(/^<p>[\s\S]*?<\/p>/) || [''])[0].length == block.length){
+					// strip away the <p>
+					block = block.replace(/^<p>|<\/p>$/g, '');
+				}
+				tc = (rownum<theadsize || v_header[colnum] || rownum>=theadsize+tbodysize ? 'th' : 'td');
+				colspan = (td.colspan>1 ? ' colspan="'+td.colspan+'"': '');
+				rowspan = (td.rowspan>1 ? ' rowspan="'+td.rowspan+'"': '');
+				coord = (!strict ? ' class="tc-'+td.colnum+'_'+td.rownum+'"':'');
+				output += '<'+tc+colspan+rowspan +'>'+block+'</'+tc+'>\n';
+			}
+			output += '</tr>\n';
+			output += (rownum==theadsize-1 ? '</thead>\n' : rownum==theadsize+tbodysize-1 ? '</tbody>\n' : rownum==theadsize+tbodysize+tfootsize-1 ? '</tfoot>\n' : '');
         }
-        text += "</tbody>\n</table>";
+        output += '</table>';
+        output += ( captionbelow ? captionabove ? '\n' + spitoutbelow : '' : '\n' + spitoutbelow ); // spit out the superfluous second table caption
+        console.log(output);
+		
+        return _HashBlock( output ) + "\n";
         
-        return _HashBlock( text ) + "\n";
     }
     
      
@@ -1007,6 +1117,7 @@ function Pandoc(text) {
     
     function _DoGrid_callback( $0, $1, $2, $3, $4 ) {
     	debug = true;
+    	endoflinebug = false;
 		//console.clear();
 		if(debug){console.log(new Date());}
 		html5 = false;
@@ -1105,7 +1216,14 @@ function Pandoc(text) {
 		                colspan++;
 		                
 		                x2 = indices.regexIndexOf(/\d/, x2 + 1) * 1;
-		                		                
+		                
+		                if (x2 < 0 || arr[y2].charAt(x2 + 1) == '') {
+							if(debug){console.error('end of columns in hor traverse!');}
+							rows[rows.length] = i;
+							endoflinebug = true;
+							break;
+						}
+		            		                
 		                a = arr[y2 - 1].charAt(x2);
 		                b = arr[y2].charAt(x2 - 1);
 		                c = arr[y2].charAt(x2 + 1);
@@ -1128,6 +1246,8 @@ function Pandoc(text) {
 		                }
 		                
 		                if(debug){console.log([x1, y1], [x2, y2], colspan);}
+		                
+		                
 		            }
 
 
@@ -1175,6 +1295,7 @@ function Pandoc(text) {
 		            )
 		            &&
 		            border['bottom'].match(/^[-+=:; ]+$/) // see "J" in the example
+		            || endoflinebug
 		            ) {
 		                text = '';
 
