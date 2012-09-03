@@ -1006,7 +1006,7 @@ function Pandoc(text) {
     }
     
     function _DoGrid_callback( $0, $1, $2, $3, $4 ) {
-    	debug = false;
+    	debug = true;
 		//console.clear();
 		if(debug){console.log(new Date());}
 		html5 = false;
@@ -1062,33 +1062,71 @@ function Pandoc(text) {
 		            }
 
 		            //  a    | 
-		            // b+c  -+-
+		            // bzc  -+-
 		            //  d    |
 
 		            a = arr[y2 - 1].charAt(x2);
 		            b = arr[y2].charAt(x2 - 1);
 		            c = arr[y2].charAt(x2 + 1);
 		            d = arr[y2 + 1].charAt(x2);
+		            z = arr[y2].charAt(x2);
+		            
+					border = {};
+		            border['top'] = arr[y1].substring(x1 + 1, x2);
+		            border['bottom'] = arr[y2].substring(x1 + 1, x2);
+		            //console.log('{'+border['bottom']+'}',  !border['bottom'].match(/^[-+=:; ]+$/) );
+				
+					border['left'] = border['right'] = '';
+					for (y = y1 + 1; y < y2; y++) {
+						text += arr[y].substring(x1 + 1, x2) + '\n';
+						border['left'] += arr[y].substr(x1, 1);
+						border['right'] += arr[y].substr(x2, 1);
+					}
 		            
 		            colspan = 1;
-		            while (arr[y2].charAt(x2).match(/[ -]/) || (
+		            
+		            // horizontal traverse
+		            while (z.match(/[ -]/) || (
 		            //  a    _ 
-					// b+c  -+-
+					// bzc  -+-
 					//  d    # 
 		            a == ' '
 		            && b.match(/[-=:;]/) && c.match(/[-=:;]/)
-		            && d.match(/[|=:; ]|$/))
+		            && d.match(/[|=:; ]|$/)
+		            )
+		            || !border['right'].match(/^[|+=:; ]+$/) // see "J" in the example
 		            ) {
-		                if (a == ' ' && b.match(/[-=:;]/) && c.match(/[-=:;]/) && d.match(/[|=:; ]|$/)) {
+		                if (a == ' ' && b.match(/[-=:;]/) && c.match(/[-=:;]/) && d.match(/[|=:; ]|$/)
+		                || !border['right'].match(/^[|+=:; ]+$/)
+		            	) {
 		                    indices[x2] = i;
-		                    console.warn(a + '\n' + b + arr[y2].charAt(x2) + c + '\n' + d);
+		                    console.warn(a + '\n' + b + z + c + '\n' + d);
 		                }
 		                colspan++;
+		                
 		                x2 = indices.regexIndexOf(/\d/, x2 + 1) * 1;
+		                		                
 		                a = arr[y2 - 1].charAt(x2);
 		                b = arr[y2].charAt(x2 - 1);
 		                c = arr[y2].charAt(x2 + 1);
 		                d = arr[y2 + 1].charAt(x2);
+		                z = arr[y2].charAt(x2);
+		                
+						border['top'] = arr[y1].substring(x1 + 1, x2);
+						border['bottom'] = arr[y2].substring(x1 + 1, x2);
+						//console.log('{'+border['bottom']+'}',  !border['bottom'].match(/^[-+=:; ]+$/) );
+					
+						border['left'] = border['right'] = '';
+						for (y = y1 + 1; y < y2; y++) {
+							text += arr[y].substring(x1 + 1, x2) + '\n';
+							border['left'] += arr[y].substr(x1, 1);
+							border['right'] += arr[y].substr(x2, 1);
+						}
+		                
+		                if(z.match(/[ -]/)){
+		                	console.log('z: ', z);
+		                }
+		                
 		                if(debug){console.log([x1, y1], [x2, y2], colspan);}
 		            }
 
@@ -1121,14 +1159,10 @@ function Pandoc(text) {
 		            // +---+---+---+  |  +   +   +   +  |  +---+---+---+  |  +   +   +   +
 		            //
 
-		            border = {};
-		            border['top'] = arr[y1].substring(x1 + 1, x2);
-		            border['bottom'] = arr[y2].substring(x1 + 1, x2);
-		            //console.log('{'+border['bottom']+'}',  !border['bottom'].match(/^[-+=:; ]+$/) );
-
+					
 
 		            if (
-		            arr[y2].charAt(x2) == '+'
+		            z == '+'
 		            && a.match(/[ |=:;+]/)
 		            && b.match(/[ -=:;+]/)
 		            && !(
@@ -1262,8 +1296,6 @@ function Pandoc(text) {
 		                table[y1] = table[y1] || [];
 		                table[y1][x1] = html;
 		                
-		                if(debug){console.log(ind, i);}
-		                
 						while (indices.length < ind) {
 							indices.push('_');
 						}
@@ -1276,9 +1308,9 @@ function Pandoc(text) {
 		                    while (blanks.length < border['bottom'].length) {
 		                        blanks += ' ';
 		                    }
-		                    console.log(blanks + a + ' \n' + border['bottom'] + arr[y2].charAt(x2) + c + '\n' + blanks + d + ' ');
+		                    console.log(blanks + a + ' \n' + border['bottom'] + z + c + '\n' + blanks + d + ' ');
 		                } else {
-		                    console.log(' ' + a + ' \n' + b + arr[y2].charAt(x2) + c + '\n ' + d + ' ');
+		                    console.log(' ' + a + ' \n' + b + z + c + '\n ' + d + ' ');
 		                }
 		            }
 		        }
