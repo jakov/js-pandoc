@@ -33,6 +33,20 @@
 function Pandoc(text) {
 	pandoc = true;
 	strict = false;
+	debug = false;
+	
+	if (!debug) {
+		window.console = {
+			log: function () {},
+			group: function () {},
+			error: function () {},
+			warn: function () {},
+			groupEnd: function () {},
+			clear: function () {},
+			info: function () {}
+		};
+	}
+
 
     /* Utilities */
     function Array_pad(target, size, value) {
@@ -868,9 +882,9 @@ console.log('underline:', underline, 'overline:', overline);
         function fillrowuntil(rownum, colnum){
         	tn = {};
         	beforelength = object[rownum].length;
-        	console.log(beforelength);
+        	console.log( typeof object[rownum][beforelength-1] == 'object' ? object[rownum][beforelength-1].colnum + object[rownum][beforelength-1].colspan : 0+1);
         	
-        	for(pointer = (object[rownum][beforelength-1] ? object[rownum][beforelength-1].colnum : 0); pointer < colnum; pointer ++){
+        	for(pointer = ( typeof object[rownum][beforelength-1] == 'object' ? object[rownum][beforelength-1].colnum + object[rownum][beforelength-1].colspan : 0+1); pointer <= colnum; pointer ++){
         		tn.raw = '|';
 				tn.text = ' ' + '\n';
 				tn.colnum = pointer;
@@ -1117,6 +1131,7 @@ console.log('underline:', underline, 'overline:', overline);
     
     function _DoGrid_callback( $0, $1, $2, $3, $4 ) {
     	debug = true;
+
     	endoflinebug = false;
 		//console.clear();
 		if(debug){console.log(new Date());}
