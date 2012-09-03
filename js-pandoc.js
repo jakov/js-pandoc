@@ -862,6 +862,7 @@ console.log('underline:', underline, 'overline:', overline);
         
 		var h_align_all = [];
 		var v_align_all = '';
+		colgroup = [];
 		
 		v_header = [];
 
@@ -926,21 +927,31 @@ console.log('underline:', underline, 'overline:', overline);
 					td = {};
 	        		raw = table[y][x];
 	        		[, s, l, text, r, z] = raw.match(/^([|^'])([:;]?)(.*?)([:;]?)([|^']*)$/);
-	        		
-	        		switch(s){
+	        		console.log(y, x, s,l,text,r,z.length+1);
+					switch(s){
 	        			case "|":
 							h_align_srt = (l == ':' && r == ':' ? 'center' : l == ':' ? 'left' : r == ':' ? 'right' : 'default');
 							h_align_end = (l == ';' && r == ';' ? 'center' : l == ';' ? 'left' : r == ';' ? 'right' : 'default');
+							console.log(h_align_srt, h_align_end, colnum);
+							console.log(h_align_all, colnum);
 							
 							if (h_align_srt != 'default') {
+								console.log(h_align_all, colnum);
+								console.log('start');
 								h_align = h_align_srt;
-								h_align_all[x] = h_align_srt;
+								h_align_all[colnum] = h_align_srt;
+								console.log(h_align_all, colnum);
+								
 							} else if (h_align_end != 'default') {
+								console.log('end');
 								h_align = h_align_end;
-								h_align_all[x] = 'default';
+								h_align_all[colnum] = 'default';
 							} else {
-								h_align = h_align_all[x] || 'default';
+								console.log('else');
+								h_align = h_align_all[colnum] || 'default';
 							}
+							h_align_all[colnum] = h_align_all[colnum] || 'default';
+							
 							
 	        				if(!(y+1==underline || y+1==overline)){
 	        					fillrowuntil(rownum, colnum-1);
@@ -960,11 +971,18 @@ console.log('underline:', underline, 'overline:', overline);
 								
 								colnum += td.colspan;		
 	        				}
-	        				else{
+	        				else {
+	        					
 	        					if(text.match(/[=]/)){
 	        						v_header[colnum] = true;
 	        						console.log(v_header);
 	        					}
+	        					
+	        					if(y+1==underline){
+	        						colgroup[colnum] = raw.length;
+	        						console.log('colgroup:',colgroup);
+	        					}
+	        					
 	        					colnum += z.length+1;
 	        				}
 	        			break;
@@ -1004,7 +1022,8 @@ console.log('underline:', underline, 'overline:', overline);
 	        			break;
 	        		}
 	        		
-
+					console.log(h_align_all, x);
+	        		
 	        		
 
 					//row += _RunBlockGamut( text );
@@ -1079,7 +1098,8 @@ console.log('underline:', underline, 'overline:', overline);
 				colspan = (td.colspan>1 ? ' colspan="'+td.colspan+'"': '');
 				rowspan = (td.rowspan>1 ? ' rowspan="'+td.rowspan+'"': '');
 				coord = (!strict ? ' class="tc-'+td.colnum+'_'+td.rownum+'"':'');
-				output += '<'+tc+colspan+rowspan +'>'+block+'</'+tc+'>\n';
+				style = ' style="text-align:'+td.h_align+';"';
+				output += '<'+tc+colspan+rowspan+coord+style+'>'+block+'</'+tc+'>\n';
 			}
 			output += '</tr>\n';
 			output += (rownum==theadsize-1 ? '</thead>\n' : rownum==theadsize+tbodysize-1 ? '</tbody>\n' : rownum==theadsize+tbodysize+tfootsize-1 ? '</tfoot>\n' : '');
