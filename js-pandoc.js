@@ -33,7 +33,7 @@
 function Pandoc(text) {
 	pandoc = true;
 	strict = false;
-	debug = false;
+	debug = true;
 	
 	if (!debug) {
 		window.console = {
@@ -892,6 +892,7 @@ console.log('underline:', underline, 'overline:', overline);
 				tn.rownum = rownum;
 				tn.colspan = 1;
 				tn.rowspan = 1;
+				tn.height = 1;
 				tn.h_align = 'default';
 				
 				object[rownum].push(tn);
@@ -932,20 +933,16 @@ console.log('underline:', underline, 'overline:', overline);
 	        			case "|":
 							h_align_srt = (l == ':' && r == ':' ? 'center' : l == ':' ? 'left' : r == ':' ? 'right' : 'default');
 							h_align_end = (l == ';' && r == ';' ? 'center' : l == ';' ? 'left' : r == ';' ? 'right' : 'default');
-							console.log(h_align_srt, h_align_end, colnum);
-							console.log(h_align_all, colnum);
 							
 							if (h_align_srt != 'default') {
-								console.log(h_align_all, colnum);
-								console.log('start');
 								h_align = h_align_srt;
 								h_align_all[colnum] = h_align_srt;
-								console.log(h_align_all, colnum);
+								console.log('start', h_align);
 								
 							} else if (h_align_end != 'default') {
-								console.log('end');
 								h_align = h_align_end;
 								h_align_all[colnum] = 'default';
+								console.log('end/singlecell', h_align);
 							} else {
 								console.log('else');
 								h_align = h_align_all[colnum] || 'default';
@@ -961,6 +958,7 @@ console.log('underline:', underline, 'overline:', overline);
 								td.text = text + '\n';
 								td.colnum = colnum;
 								td.rownum = rownum;
+								td.height = 1;
 								td.colspan = z.length+1;
 								td.rowspan = 1;
 								td.h_align = h_align;
@@ -1005,11 +1003,15 @@ console.log('underline:', underline, 'overline:', overline);
 	        					if(colnum<object[rownum-1].length){
 	        						object[rownum-1][colnum].raw += raw + '\n';
 									object[rownum-1][colnum].text += text+ '\n';
-									height = object[rownum-1][colnum].text.split(/\n/).length;
+									object[rownum-1][colnum].height = (object[rownum-1][colnum].height || 1) + 1;
 									[, s, l, text, r, z] = raw.match(/^([|^'])([:;]?)(.*?)([:;]?)([|^']*)$/);
-									if(height==2){
-										//vertical align
-									}
+									//console.error('height', height);
+									
+										h_align_srt = (l == ':' && r == ':' ? 'center' : l == ':' ? 'left' : r == ':' ? 'right' : 'default');
+										h_align_end = (l == ';' && r == ';' ? 'center' : l == ';' ? 'left' : r == ';' ? 'right' : 'default');
+							
+										console.error('asdf',h_align_srt, h_align_end);
+									
 									
 									console.log(object[rownum-1][colnum].text);		
 	        					}
@@ -1022,7 +1024,7 @@ console.log('underline:', underline, 'overline:', overline);
 	        			break;
 	        		}
 	        		
-					console.log(h_align_all, x);
+					//console.log(h_align_all, x);
 	        		
 	        		
 
@@ -1178,7 +1180,7 @@ console.log('underline:', underline, 'overline:', overline);
 		table = [];
 		rows = [];
 		var h_align_all = [];
-		var v_align_all = [];
+		var v_align_all = '';
 		var indices = [];
 		for (i = 0; i < arr.length; i++) {
 		    while (arr[i].length < longest) {

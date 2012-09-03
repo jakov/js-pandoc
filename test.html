@@ -303,9 +303,9 @@ The same applies for vertical align:
 
 |a      |b      |c
 |-------|-------|--
-|right ;|2      |;center;|
-'...    '2      '        '
-'middle;'       ' top    '
+|right \ ;|2      |;center;|
+'...   \ '2      '        '
+'middle ;'       ' top    '
 |444444444444444\  | left  |6666666666 \
 '444444444444444   ';bottom'6666666666
 
@@ -364,6 +364,33 @@ vertical align for the rest of the *row*.
 '         '         ' ...    \ '
 ':        '         ' ...      '
 |---------|---------|----------|
+
+
+|---------|
+| default |
+'         '
+'         '
+|: top    |
+'         '
+'         '
+| bottom  |
+'         '
+':        '
+|  middle |
+':        '
+'         '
+|: middle |
+'         '
+':        '
+|---------|
+
+
+|    ||top|bottom|middle|justify|default
+|==|==|---|------|------|-------|-------
+|next | l|just|bottom|bottom|bottom|bottom
+^row  |-l|top|middle|middle|top|default
+
+
 
 Pandoc Style Tables
 ---------------------
