@@ -23,11 +23,11 @@ You can try in your hand.
 
 ### How to use ###
 
-Load this script in HTML and call ```Markdown``` function.
+Load this script in HTML and call ```Pandoc``` function.
 
 ```javascript
 	//example :
-	var html = Markdown( text );
+	var html = Pandoc( text );
 ```
 
 ### Notice ###

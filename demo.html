@@ -21,7 +21,7 @@
     <script>
     $(function() {
         function parse_md() {
-            var result = Pandoc($('#mdtext').val());
+            var result = Pandoc($('#mdtext').val(), {html5:true});
             $('#result').html(result);
             $('#result-src').text(result);
         }

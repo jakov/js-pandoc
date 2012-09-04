@@ -30,12 +30,27 @@
  * @param text Markdown text
  * @return HTML
  */
-function Pandoc(text) {
-	pandoc = true;
-	strict = false;
-	html5 = true;
-	debug = true;
-	addcoordinates = false;
+String.prototype.Pandoc = function(options = {}){
+	return Pandoc( this, options);
+}
+ 
+default_options = {
+	pandoc : true,
+	strict : false,
+	html5 : true,
+	debug : false,
+	addcoordinates : false,
+};
+ 
+function Pandoc(text, options = {}) {
+	console.group('options');
+	console.warn(options);
+	for(opt in default_options){
+		console.log(opt, default_options[opt]);
+		window[opt] = (typeof options[opt] == typeof default_options[opt] ? options[opt] : default_options[opt]);
+		if(window[opt]==options[opt]){console.info(opt, options[opt]);}else{console.warn(opt, options[opt], 'wrong type');}
+	}
+	console.groupEnd();
 	
 	if (!debug) {
 		window.console = {

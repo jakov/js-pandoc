@@ -921,7 +921,7 @@ http://javascript.cs.lmu.edu/notes/commandlinejs/
             .replace(/>/g, '&gt;') + '</pre>');
         document.write('<hr/>');
         */
-        document.write(Pandoc(mdtext));
+        document.write(Pandoc(mdtext, {html5:true}));
       </script>
     </div>
   </div>
