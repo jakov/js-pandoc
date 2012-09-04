@@ -449,65 +449,27 @@ vertical align for the rest of the *row*.
 
 : Whole row vertical alignment
 
-|---------|---------|----------|
-| default | default | default\ |
-'         '         ' ...    \ '
-'         '         ' ...      '
-|: top    | top     | top    \ |
-'         '         ' ...    \ '
-'         '         ' ...      '
-| bottom  | bottom  | bottom \ |
-'         '         ' ...    \ '
-':        '         ' ...      '
-|  middle | default | middle \ |
-':        '         ' ...    \ '
-'         '         ' ...      '
-|: justify| justify | justify\ |
-'         '         ' ...    \ '
-':        '         ' ...      '
-|---------|---------|----------|
-
-
-|---------|
-| default |
-'         '
-'         '
-|; top    |
-'         '
-'         '
-| bottom  |
-'         '
-';        '
-|  middle |
-';        '
-'         '
-|; justify|
-'         '
-';        '
-
-
-|---------|
-| default |
-'         '
-'         '
-|: top    |
-'         '
-'         '
-| bottom  |
-'         '
-':        '
-|  middle |
-':        '
-'         '
-|: justify|
-'         '
-':        '
-|---------|
-
-
+|---------|---------|---------|----------|
+| default | default | default | default\ |
+'         '         '         ' ...    \ '
+'         '         '         ' ...      '
+|: top    | top     |;top     | default\ |
+'         '         '         ' ...    \ '
+'         '         '         ' ...      '
+| bottom  | bottom  | bottom  | default\ |
+'         '         '         ' ...    \ '
+':        '         ';        ' ...      '
+|  middle | middle  | middle  | default\ |
+':        '         ';        ' ...    \ '
+'         '         '         ' ...      '
+|: middle | middle  |;middle  | default\ |
+'         '         '         ' ...    \ '
+':        '         ';        ' ...      '
+|---------|---------|---------|----------|
 								
+																		
 |             ||top    |bottom|middle|justify|default
-|==|==|--------|-------|------|------|-------|-------
+|=====|========|-------|------|------|-------|-------
 |next | l \| r |justify|bottom|bottom|bottom |bottom
 ^row  |-l \| r |top    |middle|middle|top    |default
 

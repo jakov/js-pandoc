@@ -35,6 +35,7 @@ function Pandoc(text) {
 	strict = false;
 	html5 = true;
 	debug = true;
+	addcoordinates = false;
 	
 	if (!debug) {
 		window.console = {
@@ -875,7 +876,7 @@ console.log('underline:', underline, 'overline:', overline);
         //content		= content.replace( /[|][ ]*$/gm, '' );
         
 		var h_align_all = [];
-		var v_align_all = '';
+		var v_align_all = [];
 		colgroup = [];
 		
 		v_header = [];
@@ -902,12 +903,15 @@ console.log('underline:', underline, 'overline:', overline);
         	for(pointer = ( typeof object[rownum][beforelength-1] == 'object' ? object[rownum][beforelength-1].colnum + object[rownum][beforelength-1].colspan : 0+1); pointer <= colnum; pointer ++){
         		tn.raw = '|';
 				tn.text = ' ' + '\n';
+				tn.l = ' ';
+				tn.r = ' ';
 				tn.colnum = pointer;
 				tn.rownum = rownum;
 				tn.colspan = 1;
 				tn.rowspan = 1;
 				tn.height = 1;
 				tn.h_align = 'default';
+				tn.v_align = 'default';
 				
 				object[rownum].push(tn);
 				console.warn('this row was extended to be able to put the content somewhere');
@@ -915,7 +919,7 @@ console.log('underline:', underline, 'overline:', overline);
         }
         
         for(y=0, rows_len = table.length; y < rows_len; y++ ){
-			console.info('y:', y);
+			console.group('y:', y);
         	//row = '';
         	/*if(y==0 && y<und){
         		rownum = 0;
@@ -938,11 +942,13 @@ console.log('underline:', underline, 'overline:', overline);
         	colnum = 0;
         	advance = false;
         	for(x=0, cols_len = table[y].length; x < cols_len; x++ ){
-        			console.warn('x:', x);
+        			console.group('x:', x);
 					td = {};
 	        		raw = table[y][x];
 	        		[, s, l, text, r, z] = raw.match(/^([|^'])([:;]?)(.*?)([:;]?)([|^']*)$/);
-	        		console.log(y, x, s,l,text,r,z.length+1);
+	        		l = (l=='' ? ' ' : l);
+	        		r = (r=='' ? ' ' : r);
+	        		console.log([s,l,text,r,z]);
 					switch(s){
 	        			case "|":
 							h_align_srt = (l == ':' && r == ':' ? 'center' : l == ':' ? 'left' : r == ':' ? 'right' : 'default');
@@ -952,6 +958,10 @@ console.log('underline:', underline, 'overline:', overline);
 								h_align = h_align_srt;
 								h_align_all[colnum] = h_align_srt;
 								console.log('start', h_align);
+										
+								td.v_align_to_right = true;
+								console.warn('the next one will take my v_align');
+										
 								
 							} else if (h_align_end != 'default') {
 								h_align = h_align_end;
@@ -969,6 +979,8 @@ console.log('underline:', underline, 'overline:', overline);
 	        				
 	        					advance = true;
 								td.raw = raw;
+								td.l = l;
+								td.r = r;
 								td.text = text + '\n';
 								td.colnum = colnum;
 								td.rownum = rownum;
@@ -976,8 +988,9 @@ console.log('underline:', underline, 'overline:', overline);
 								td.colspan = z.length+1;
 								td.rowspan = 1;
 								td.h_align = h_align;
+								td.v_align = 'default';
 								
-								console.log(y, x, s,l,text,r,z.length+1, h_align);
+								console.log(s,l,text,r,z.length+1, h_align);
 								
 								object[rownum][colnum] = td;
 								
@@ -1002,9 +1015,10 @@ console.log('underline:', underline, 'overline:', overline);
 	        				if(!(y+1==underline || y+1==overline)){
 	        					console.log(object[rownum-1].length-1,colnum);
 	        					fillrowuntil(rownum-1, colnum);
-	        				
+	        						        				
 	        					if(colnum<object[rownum-1].length){
-	        						object[rownum-1][colnum].rowspan ++;	
+									tu = object[rownum-1][colnum];
+									tu.rowspan ++;	
 	        					}
 								else{
 									console.error('cannot extend rowspan of nonexisting cell');
@@ -1015,19 +1029,52 @@ console.log('underline:', underline, 'overline:', overline);
 	        					fillrowuntil(rownum-1, colnum);
 	        				
 	        					if(colnum<object[rownum-1].length){
-	        						object[rownum-1][colnum].raw += raw + '\n';
-									object[rownum-1][colnum].text += text+ '\n';
-									object[rownum-1][colnum].height = (object[rownum-1][colnum].height || 1) + 1;
-									[, s, l, text, r, z] = raw.match(/^([|^'])([:;]?)(.*?)([:;]?)([|^']*)$/);
-									//console.error('height', height);
+	        						tu = object[rownum-1][colnum];
+	        						tu.raw += raw + '\n';
+									tu.text += text+ '\n';
+									tu.l += l;
+									tu.r += r;
 									
-										h_align_srt = (l == ':' && r == ':' ? 'center' : l == ':' ? 'left' : r == ':' ? 'right' : 'default');
-										h_align_end = (l == ';' && r == ';' ? 'center' : l == ';' ? 'left' : r == ';' ? 'right' : 'default');
-							
-										console.error('asdf',h_align_srt, h_align_end);
+									h_align_srt = (l == ':' && r == ':' ? 'center' : l == ':' ? 'left' : r == ':' ? 'right' : 'default');
+									h_align_end = (l == ';' && r == ';' ? 'center' : l == ';' ? 'left' : r == ';' ? 'right' : 'default');
+																		
+									// |             ||top    |bottom|middle|justify|default
+									// |=====|========|-------|------|------|-------|-------
+									// |next | l \| r |justify|bottom|bottom|bottom |bottom
+									// ^row  |-l \| r |top    |middle|middle|top    |default
 									
+								// 	if(tu.l.length==2 && tu.v_align=='default'){
+// 										tu.v_align = (tu.h_align!='default' ? 'top' : 'default');
+// 									}
 									
-									console.log(object[rownum-1][colnum].text);		
+									tu.v_align = tu.l.match(/^[:;]/) ? (tu.l.match(/[:;]$/) ? 'middle' : 'top') : (tu.l.match(/[:;]$/) ? 'bottom' : (tu.l.match(/.[:;]/) ? 'middle':'default') );
+									console.info('tu.v_align:', tu.v_align);
+									// if(l.match(/[:;]/) || r.match(/[:;]/)){
+// 										tu.v_align = (tu.v_align=="top" ? 'justify' : 'bottom');
+										if(l==':'||r==':'){
+											tu.v_align_to_right = true;
+											console.warn('the next one will take my v_align');
+										}
+// 									}
+// 									else{
+// 										switch(tu.v_align){
+// 											case "top": case "justify": tu.v_align = 'top';break;
+// 											case "bottom": case "middle": tu.v_align = 'middle';break;
+// 											case "default": tu.v_align = 'default';break;
+// 										}
+										if(colnum>0 && tu.v_align=='default'){
+											tl = object[rownum-1][colnum-1];
+										 	if(tl.v_align_to_right){
+												tu.v_align = tl.v_align;
+												console.info('i took the v_align from my left neighbour');
+											}
+											else{
+												
+											}
+										}
+// 									}
+
+									console.log('_'+tu.l+'_', tu.l.length, '_'+tu.r+'_', tu.r.length);									
 	        					}
 								else{
 									console.error('cannot put content into nonexisting cell');
@@ -1041,7 +1088,7 @@ console.log('underline:', underline, 'overline:', overline);
 					//console.log(h_align_all, x);
 	        		
 	        		
-
+					console.groupEnd();
 					//row += _RunBlockGamut( text );
         	}
         	
@@ -1076,6 +1123,7 @@ console.log('underline:', underline, 'overline:', overline);
         	else if(y==rows_len-1){
         		output += '</tbody>\n';
         	}*/
+        	console.groupEnd();
         }
         
         
@@ -1113,8 +1161,21 @@ console.log('underline:', underline, 'overline:', overline);
 				tc = (rownum<theadsize || v_header[colnum] || rownum>=theadsize+tbodysize ? 'th' : 'td');
 				colspan = (td.colspan>1 ? ' colspan="'+td.colspan+'"': '');
 				rowspan = (td.rowspan>1 ? ' rowspan="'+td.rowspan+'"': '');
-				coord = (!strict ? ' class="tc-'+td.colnum+'_'+td.rownum+'"':'');
-				style = ' style="text-align:'+td.h_align+';"';
+				coord = (addcoordinates ? ' class="tc-'+td.colnum+'_'+td.rownum+'"':'');
+				td.v_align = (td.v_align=='justify' ? 'middle' : td.v_align);
+				style = '';
+				if( td.h_align!='default' && td.v_align!='default' ){				
+					if(html5){
+						style = ' style="';
+						style += (td.h_align!='default' ? 'text-align:'+td.h_align+';' : '');
+						style += (td.v_align!='default' ? 'vertical-align:'+td.v_align+';' : '');
+						style += '"';				
+					}
+					else {
+						style += (td.h_align!='default' ? ' align="'+td.h_align+'"' : '');
+						style += (td.v_align!='default' ? ' valign="'+td.v_align+'"' : '');					
+					}
+				}
 				output += '<'+tc+colspan+rowspan+coord+style+'>'+block+'</'+tc+'>\n';
 			}
 			output += '</tr>\n';
