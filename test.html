@@ -474,6 +474,34 @@ vertical align for the rest of the *row*.
 ^row  |-l \| r |top    |middle|middle|top    |default
 
 
+Maybe some symbol instead of ":" for horizontal pass on of horizontal align?
+
+
+	|----------|---------|---------|
+	|> center >| center  | center  |
+	| default  | default | default |
+	|----------|---------|---------|
+
+
+Then ">" would maybe pass on vertical align horizontally too?
+
+	|----------|---------|---------|
+	|> middle  | middle  | middle  |
+	'>         '         '         '
+	| default  | default | default |
+	|----------|---------|---------|
+
+
+And ":" would pass on horizontal *and* vertical align vertically?
+
+	|----------|---------|---------|
+	|: middle  | default | default |
+	':         '         '         '
+	| middle   | default | default |
+	|----------|---------|---------|
+
+
+
 Pandoc Style Tables
 ---------------------
 
