@@ -403,13 +403,13 @@ asdf|asdf|asdf
 
 The same applies for vertical align:
 
-|a      |b      |c
-|-------|-------|--
-|right \ ;|2      |;center;|
-'...   \ '2      '        '
-'middle ;'       ' top    '
-|444444444444444\  | left  |6666666666 \
-'444444444444444   ';bottom'6666666666
+|a                |b      |c
+|-----------------|-------|--
+|right         \ ;|2      |;center;
+'...            \ '2      ' top    
+'middle          ;'       '        
+|444444444444444\ | left  |6666666666 \
+'444444444444444  ';bottom'6666666666
 
 Like in Markdown Extra, you can set align for the rest of the column with `:`.
 You can do this in any cell, not just in the `-----` line.
@@ -462,10 +462,28 @@ vertical align for the rest of the *row*.
 |  middle | default | middle \ |
 ':        '         ' ...    \ '
 '         '         ' ...      '
-|: middle | middle  | middle \ |
+|: justify| justify | justify\ |
 '         '         ' ...    \ '
 ':        '         ' ...      '
 |---------|---------|----------|
+
+
+|---------|
+| default |
+'         '
+'         '
+|; top    |
+'         '
+'         '
+| bottom  |
+'         '
+';        '
+|  middle |
+';        '
+'         '
+|; justify|
+'         '
+';        '
 
 
 |---------|
@@ -481,17 +499,17 @@ vertical align for the rest of the *row*.
 |  middle |
 ':        '
 '         '
-|: middle |
+|: justify|
 '         '
 ':        '
 |---------|
 
 
-|    ||top|bottom|middle|justify|default
-|==|==|---|------|------|-------|-------
-|next | l|just|bottom|bottom|bottom|bottom
-^row  |-l|top|middle|middle|top|default
-
+								
+|             ||top    |bottom|middle|justify|default
+|==|==|--------|-------|------|------|-------|-------
+|next | l \| r |justify|bottom|bottom|bottom |bottom
+^row  |-l \| r |top    |middle|middle|top    |default
 
 
 Pandoc Style Tables
@@ -714,6 +732,31 @@ can be anywhere in the middle.
 |         |         |         | ...    \ |
 :         |         ;         | ...      |
 +---------+---------+---------+----------+
+
+
+: Whole row vertical alignment and whole column horizontal alignment
+
++---------+:--------+--------:+----:----+:-------:+
+|default\ |default\ |default\ |default\ |default\ |
+|default\ | left  \ | right \ | center\ |justify\ |
+| ...     | ...     | ...     | ...     | ...     |
++---------+---------+---------+---------+---------+
+: top\    | top ! \ ; top\    |default\ |default\ |
+|default\ | left  \ | right \ | center\ |justify\ |
+| ...     | ...     | ...     | ...     | ...     |
++---------+---------+---------+---------+---------+
+| bottom\ | bottom!\| bottom\ |default\ |default\ |
+|default\ | left  \ | right \ | center\ |justify\ |
+: ...     | ...     ; ...     | ...     | ...     |
++---------+;--------+--------;+----;----+;-------;+
+| middle\ | middle\ | middle\ |default\ |default\ |
+:default\ | left  \ ; right \ | center\ |justify\ |
+| ...     | ...     | ...     | ...     | ...     |
++---------+---------+---------+---------+---------+
+:justify\ |justify\ ;justify\ |default\ |default\ |
+|default\ |default\ |default\ |default\ |default\ |
+: ...     | ...     ; ...     | ...     | ...     |
++---------+---------+---------+---------+---------+
 
 ##### Table headers
 

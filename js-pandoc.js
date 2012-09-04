@@ -33,6 +33,7 @@
 function Pandoc(text) {
 	pandoc = true;
 	strict = false;
+	html5 = true;
 	debug = true;
 	
 	if (!debug) {
@@ -1170,8 +1171,7 @@ console.log('underline:', underline, 'overline:', overline);
     	endoflinebug = false;
 		//console.clear();
 		if(debug){console.log(new Date());}
-		html5 = false;
-		default_h_align = 'left';
+		default_h_align = (strict ? 'left' : 'default');
 		default_v_align = 'default';
 		markdown = false;
 		String.prototype.regexIndexOf = function (regex, startpos) {
@@ -1193,7 +1193,7 @@ console.log('underline:', underline, 'overline:', overline);
 		table = [];
 		rows = [];
 		var h_align_all = [];
-		var v_align_all = '';
+		var v_align_all = [];
 		var indices = [];
 		for (i = 0; i < arr.length; i++) {
 		    while (arr[i].length < longest) {
