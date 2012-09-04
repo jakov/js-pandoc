@@ -1,4 +1,4 @@
-# js-markdown-extra
+# js-pandoc
 
 ver 1.0  
 based on PHP Markdown Extra 1.01  
@@ -56,13 +56,4 @@ This software is based on BSD license.
 Free for modification, redistribution and embedding if copyright included.
 
 ### Agreement ###
-
-Shall we not be liable for any damages caused by this software.
-
-### History ###
-
-#### 1.1 - 2008-05-31
-  BUGFIX: Reference syntax with empty title. (Thanks to reporter)
-
-#### 1.0 - 2006-07-08
-  1st release.
+We shall not be liable for any damages caused by this software.
