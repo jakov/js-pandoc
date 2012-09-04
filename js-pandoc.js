@@ -742,10 +742,11 @@ function Pandoc(text) {
     
      
     
-    var md_reg_DoHeaders1 = /(^.+?)(?:[ ]+\{#([-_:a-zA-Z0-9]+)\})?[ \t]*\n=+[ \t]*\n+/gm;
-    var md_reg_DoHeaders2 = /(^.+?)(?:[ ]+\{#([-_:a-zA-Z0-9]+)\})?[ \t]*\n-+[ \t]*\n+/gm;
+    var md_reg_DoHeaders1 = /(^.+?)(?:[ ]+\{#([-_:a-zA-Z0-9]+)\})?[ \t]*\n=+[ \t]*\n+/gm; // setext-style
+    var md_reg_DoHeaders2 = /(^.+?)(?:[ ]+\{#([-_:a-zA-Z0-9]+)\})?[ \t]*\n-+[ \t]*\n+/gm; // setext-style
     var md_reg_DoHeaders3 = new RegExp(
-      '^(#{1,6})'
+      '^'
+    + (pandoc ? ( strict ? '(#{1,6})(?![.])' : '(#+(?![.])[=+-]*)'): (strict ? '(#{1,6})' : '(#+[=+-]*)') ) // do not include pandoc "#." 
     + '[ \\t]*'
     + '(.+?)'
     + '[ \\t]*'
@@ -771,10 +772,22 @@ function Pandoc(text) {
         
         var reg = md_reg_DoHeaders3;
         text = text.replace( reg, function( $0, $1, $2, $3 ) {
-                    var str = "<h" + $1.length;
+        			[, dashes, plusminus] = $1.match(/(#+)([=+-]*)/);
+        			level = (plusminus.length==0 ? dashes.length : (window.previouslevel || 1));
+        			for(c=0;c<plusminus.length;c++){
+        				switch(plusminus[c]){
+        					case "+": level++;break;
+        					case "-": level--;break;
+        				}	
+        			}
+        			level = (level<1 ? 1 : level);
+        			window.previouslevel = level;
+        			hx = (level <=6 ? "h" + level : 'span');
+        			cssclass = (level <=6 ? '' : ' class="h'+level+'"');
+                    var str = "<" + hx + cssclass;
                     str += ( $3 ) ? ' id=\"' + _UnslashQuotes( $3 ) + '\"' : "";
                     str += ">" + _RunSpanGamut( _UnslashQuotes( $2 ) );
-                    str += "</h" + $1.length + ">";
+                    str += "</" + hx + ">";
                     return _HashBlock( str ) + "\n\n";
                 } );
         
@@ -1565,14 +1578,14 @@ console.log('underline:', underline, 'overline:', overline);
     
 	//jakov
 
-function linum2int(input) { //jakob
-	input = input.replace(/[^A-Za-z]/, '');
-	output = 0;
-	for (i = 0; i < input.length; i++) {
-		output = output * 26 + parseInt(input.substr(i, 1), 26 + 10) - 9;
+function linum2int(inp) { //jakob
+	var inp = inp.replace(/\W/, '');
+	var out = 0;
+	for (var i = 0; i < inp.length; i++) {
+		out = out * 26 + parseInt(inp.substr(i, 1), 26 + 10) - 9;
 	}
-	console.log('linum', output);
-	return output;
+	console.log(inp, 'linum', out);
+	return out;
 }
 
 function int2linum(input) { //jakob
@@ -1586,10 +1599,9 @@ function int2linum(input) { //jakob
 		zeros += next * Math.pow(27, generation);
 		generation++;
 	}
-	output = (input + zeros).toString(27).replace(/./g, function ($0) {
+	return (input + zeros).toString(27).replace(/./g, function ($0) {
 		return '_abcdefghijklmnopqrstuvwxyz'.charAt(parseInt($0, 27));
 	});
-	return output;
 }
 
 function roman2int(input) { //jakob
@@ -1603,7 +1615,7 @@ function roman2int(input) { //jakob
 		'v': 5,
 		'i': 1
 	};
-	input = input.replace(/[^A-Za-z]/, '').toLowerCase();
+	input = input.replace(/[^A-z]/, '').toLowerCase();
 	output = 0;
 	highest = false;
 	for (i = input.length - 1; i >= 0; i--) {
@@ -1633,7 +1645,17 @@ function int2roman(number) {
 
     function _DoLists( text ) {
         var md_marker_ul = '[*+-]';
-        var md_marker_ol = '\\d+[.]|[(]?\\d+[)]|[(]?\\d+[.][)]|[(]?[A-Za-z]+[)]|[A-Z]+[.][ ]|[a-z]+[.]|[MDCXLVI]+[.][ ]|[mdcxlvi]+[.]';
+        var md_marker_ol =
+        (pandoc ?
+        	(strict ? '#[.]|\\d+[.]|[(]?\\d+[)]|[(]?\\d+[.][)]|'
+				+ '[(]?[A-z][)]|[(]?[A-z][.][)]|[A-Z][.][ ]|[a-z][.]|'
+				+ '[(]?[IVXLCDMivxlcdm]+[)]|[(]?[IVXLCDMivxlcdm]+[.][)]|[IVXLCDM]+[.][ ]|[ivxlcdm]+[.]'
+        	: '#[.]|\\d+[.]|[(]?\\d+[)]|[(]?\\d+[.][)]|'
+				+ '[(]?[A-z]+[)][ ]*|[(]?[A-z]+[.:][)][ ]*|[A-Z]+[.:][ ][ ]*|[a-z]+[.:][ ]*|'
+				+ '[(]?[IVXLCDMivxlcdm]+[)][ ]*|[(]?[IVXLCDMivxlcdm]+[.:][)][ ]*|[IVXLCDM]+[.:][ ][ ]*|[ivxlcdm]+[.:][ ]*')
+        : (strict ? ''
+        	: '')
+        );
         var md_markers = new Array( md_marker_ul, md_marker_ol );
 
         for( var i = 0, len = md_markers.length; i < len; i++ ) {
@@ -1671,9 +1693,27 @@ function int2roman(number) {
                 var list = $2;
                 var list_type = $4.match( new RegExp( md_marker_ul ) ) != null ? "ul" : "ol";
 				if(list_type=="ol"){
-					if($4.match( /[a-z]+[)]/i) ){var params = ' type="'+($4.toLowerCase()==$4 ? 'a':'A')+'" start="'+linum2int($4)+'"';}
-					else if($4.match( /[mdcxlvi]+[.]/i) ){var params = ' type="'+($4.toLowerCase()==$4 ? 'i':'I')+'" start="'+roman2int($4)+'"';}
-					else {var params = ' start="'+$4.replace(/\W/, '')+'"';}
+					// not i v x : [A-HJ-UWY-Za-hj-uwy-z]
+					
+					// i. v. x. l: c: d: m: mm. ivxlcdm.					
+					if($4.match( /^[ivx][^:](?![ ]{2})|^[lcdm](?:[:]|[^:][ ]{2})|^[ivxlcdm]{2,}[^:](?![ ]{2})/i) ){var params = ' type="'+($4.replace(/\W/g, '').toLowerCase()==$4 ? 'i':'I')+'" start="'+roman2int($4)+'"';}
+					// // test for matching:
+					// var abc = "abcdefghijklmnopqrstuvwxyz";
+					// for(i=0;i<26;i++){
+					// console.log((abc[i]+'.'), (abc[i]+'.').match( /^[ivx][^:](?![ ]{3})|^[lcdm](?:[:]|[^:][ ]{3})|^[ivxlcdm]{2,}[^:](?![ ]{3})/i));
+					// console.log((abc[i]+'.   '), (abc[i]+'.   ').match( /^[ivx][^:](?![ ]{3})|^[lcdm](?:[:]|[^:][ ]{3})|^[ivxlcdm]{2,}[^:](?![ ]{3})/i));
+					// console.log((abc[i]+':'), (abc[i]+':').match( /^[ivx][^:](?![ ]{3})|^[lcdm](?:[:]|[^:][ ]{3})|^[ivxlcdm]{2,}[^:](?![ ]{3})/i));
+					// }
+					// for(i=1;i<26;i++){
+					// console.log(('c'+abc[i]+'.'), ('c'+abc[i]+'.').match( /^[ivx][^:](?![ ]{3})|^[lcdm](?:[:]|[^:][ ]{3})|^[ivxlcdm]{2,}[^:](?![ ]{3})/i));
+					// console.log(('c'+abc[i]+'.   '), ('c'+abc[i]+'.   ').match( /^[ivx][^:](?![ ]{3})|^[lcdm](?:[:]|[^:][ ]{3})|^[ivxlcdm]{2,}[^:](?![ ]{3})/i));
+					// console.log(('c'+abc[i]+':'), ('c'+abc[i]+':').match( /^[ivx][^:](?![ ]{3})|^[lcdm](?:[:]|[^:][ ]{3})|^[ivxlcdm]{2,}[^:](?![ ]{3})/i));
+					// }
+
+					// a. i: v: x: aa. mm:
+					else if($4.match( /^[a-z]+/i) ){var params = ' type="'+($4.toLowerCase()==$4 ? 'a':'A')+'" start="'+linum2int($4.replace(/\W/gi, ''))+'"';}
+
+					else {var params = ' start="'+$4.replace(/\W/g, '')+'"';}
 				} else {var params = '';}
                 var marker = ( list_type == "ul" ? md_marker_ul : md_marker_ol );
                 

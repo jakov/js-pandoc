@@ -64,6 +64,22 @@ atx-style (closing #'s are optional):
 
 ###### Header 6
 
+#### My extension: (level 4)
+
+This was suggested by a friend of mine:
+
+#= Same level as before (level4)
+
+#+ one level deeper (level5)
+
+##= same level as before (level 5)
+
+You can use as many '#'s as you want, as they obviously cant affect the level.
+
+##- one level up (level 4 again)
+
+
+
 LISTS
 ---------------
 Ordered, without paragraphs:
@@ -89,6 +105,92 @@ You can nest them:
         * BELITTLER
     3. burper
 *   Cunning
+
+### Pandoc
+
+Roman numerals:
+
+i. primus
+ii. secundus
+iii. tertius
+
+Alphabetic lists
+
+a. alpha
+b. bravo
+c. charly
+
+You can start or recommence at any letter:
+
+d. delta
+e. epsilon
+
+However "i", "v" and "x" will be automatically seen as roman numerals:
+
+v. quintus
+vi. sextus
+
+
+Uppercase lists need an extra blank after the "." not to make e.g. "A. Einstein", "B. Obama" etc. get a list. 
+
+Uppercase roman numerals:
+
+I.  PRIMVM
+II.  SECVNDVM
+III.  TERTIUM
+
+Uppercase alphabetic lists:
+
+A.  Alpha
+B.  Bravo
+C.  Charly
+
+Default ol marker:
+
+#. start at one
+#. continue at two
+
+Also use the default marker to contiune any list:
+
+i. roman lowercase
+#. more roman lowercase
+
+### My extensions
+
+Pandoc alphabetic lists only go up to "z". Mine continue with "aa" and so forth:
+
+z. zebra
+aa. alpha alpha
+ab. alpha beta
+
+To be consistent, also more than one letter uppercase alphabetic lists need an extra space after the dot.
+
+AC.  Alpha Charly
+AD.  Alpha Delta
+
+In more than one letter list starters anything that can be interpreted as a roman numeral (that is, containing only "ivxlcdm") will be automatically set as such.
+
+MM.  Millenium
+MMI.  2001
+
+To inverse this behaviour, use ":" or three blanks after the dot (not implemented yet):
+
+mm: Martha Martha
+mn: martha northpole
+
+or
+
+i: start at alphabetic "i"
+j: continue with "j"
+
+Three space example:
+
+v.   Value
+w.   Wisdom
+x.   Xylophone
+
+* Pandoc requires to start a new list if the style changes (not implemented yet)
+	* I'm not sure how my style should handle this
 
 BLOCKQUOTES
 ---------------
