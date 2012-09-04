@@ -1043,36 +1043,25 @@ console.log('underline:', underline, 'overline:', overline);
 									// |next | l \| r |justify|bottom|bottom|bottom |bottom
 									// ^row  |-l \| r |top    |middle|middle|top    |default
 									
-								// 	if(tu.l.length==2 && tu.v_align=='default'){
-// 										tu.v_align = (tu.h_align!='default' ? 'top' : 'default');
-// 									}
-									
+								
 									tu.v_align = tu.l.match(/^[:;]/) ? (tu.l.match(/[:;]$/) ? 'middle' : 'top') : (tu.l.match(/[:;]$/) ? 'bottom' : (tu.l.match(/.[:;]/) ? 'middle':'default') );
+									
+									if(l==':'||r==':'){
+										tu.v_align_to_right = true;
+										console.warn('the next one will take my v_align');
+									}
+
+									if(colnum>0 ){
+										tl = object[rownum-1][colnum-1];
+										if(tl.v_align_to_right){
+											tu.v_align = tl.v_align;
+											console.warn('i took the v_align from my left neighbour');
+										}
+										else{
+											
+										}
+									}
 									console.info('tu.v_align:', tu.v_align);
-									// if(l.match(/[:;]/) || r.match(/[:;]/)){
-// 										tu.v_align = (tu.v_align=="top" ? 'justify' : 'bottom');
-										if(l==':'||r==':'){
-											tu.v_align_to_right = true;
-											console.warn('the next one will take my v_align');
-										}
-// 									}
-// 									else{
-// 										switch(tu.v_align){
-// 											case "top": case "justify": tu.v_align = 'top';break;
-// 											case "bottom": case "middle": tu.v_align = 'middle';break;
-// 											case "default": tu.v_align = 'default';break;
-// 										}
-										if(colnum>0 && tu.v_align=='default'){
-											tl = object[rownum-1][colnum-1];
-										 	if(tl.v_align_to_right){
-												tu.v_align = tl.v_align;
-												console.info('i took the v_align from my left neighbour');
-											}
-											else{
-												
-											}
-										}
-// 									}
 
 									console.log('_'+tu.l+'_', tu.l.length, '_'+tu.r+'_', tu.r.length);									
 	        					}
@@ -1164,12 +1153,12 @@ console.log('underline:', underline, 'overline:', overline);
 				coord = (addcoordinates ? ' class="tc-'+td.colnum+'_'+td.rownum+'"':'');
 				td.v_align = (td.v_align=='justify' ? 'middle' : td.v_align);
 				style = '';
-				if( td.h_align!='default' && td.v_align!='default' ){				
+				if( td.h_align!='default' || td.v_align!='default' ){			
 					if(html5){
 						style = ' style="';
 						style += (td.h_align!='default' ? 'text-align:'+td.h_align+';' : '');
 						style += (td.v_align!='default' ? 'vertical-align:'+td.v_align+';' : '');
-						style += '"';				
+						style += '"';
 					}
 					else {
 						style += (td.h_align!='default' ? ' align="'+td.h_align+'"' : '');
