@@ -65,6 +65,7 @@ function Pandoc(text, options = {}) {
 	}
 	
 	headers_in_use = [];
+	html_to_text = false;
 	
     /* Utilities */
     function Array_pad(target, size, value) {
@@ -811,38 +812,53 @@ function Pandoc(text, options = {}) {
         return text;
     }
     function _RunHeaderId( header_id = '' ){
-    	console.group('header_id');
-		// * Remove all formatting, links, etc.
-		console.log( header_id = header_id.replace(/\<[^>]*\>?/g, '') );
+    	console.group(header_id);
+    	// * Remove all formatting, links, etc.
+    	html_to_text = html_to_text || document.createElement('span');
+    	html_to_text.innerHTML = header_id;
+    	header_id = html_to_text.textContent;
+    	html_to_text.innerHTML = '';
+		// alternative removal of html; doesn't decode html html_to_text like &amp;
+		//header_id = header_id.replace(/\<[^>]*\>?/g, '');
+		
 		// remove leading and trailing spaces and newlines
-		console.log( header_id = header_id.replace(/^[\s\n]*|[\s\n]$/g, '') );
+		header_id = header_id.replace(/^[\s\n]*|[\s\n]$/g, '');
+		
+		// replace en and em dashes with -- and ---
+		header_id = header_id.replace(/–/g, '--').replace(/—/g, '---');
+		
 		// * Replace all spaces and newlines with hyphens.
-		console.log( header_id = header_id.replace(/[\s\n\–\‐\‐]/g, '-') ); // I included special hyphens
+		header_id = header_id.replace(/[\s\n\‐\‐]/g, '-'); // I included special hyphens
+		
 		// * Remove all punctuation, except underscores, hyphens, and periods.
-		console.log( header_id = header_id.replace(/[^\w-._]/g, '') );
+		header_id = header_id.replace(/[^\w-._]/g, '');
+		
 		// * Convert all alphabetic characters to lowercase.
-		console.log( header_id = header_id.toLowerCase() );
+		header_id = header_id.toLowerCase();
+		
 		// * Remove everything up to the first letter (identifiers may not begin with a number or punctuation mark).
-		console.log( header_id = header_id.replace(/^[\W\d]*/, '') );
+		header_id = header_id.replace(/^[\W\d]*/, '');
+		
 		// * If nothing is left after this, use the identifier "section".
-		console.log( header_id = ( header_id == '' ? 'section' : header_id) );
+		header_id = ( header_id == '' ? 'section' : header_id );
+		
 		// when several headers have the same text; in this case, the first will get an identifier as described above; the second will get the same identifier with -1 appended; the third with -2; and so on.
 		if(typeof headers_in_use!='undefined'){
 			var new_header = header_id;
 			var new_counter = 1;
 			while( headers_in_use.indexOf(new_header)>=0 ){
-				console.warn(new_header, 'already used');
 				new_header = header_id + '-' + new_counter;
 				new_counter++;
 			}
 			if(new_header != header_id){
 				header_id = new_header;
-				console.info('renamed to:' + header_id);
+				console.warn('renamed to:' + header_id);
 			}
 		}
 		else {
 			headers_in_use = [];
 		}
+		console.info('#'+header_id);
 		console.groupEnd();
     	return header_id;
     }
