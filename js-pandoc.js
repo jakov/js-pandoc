@@ -41,7 +41,8 @@ default_options = {
 	pan_xtables: true,         
 	md_extra: true,   
 	mdx_xtables : true,   
-	addcoordinates: true,          
+	addcoordinates: true,   
+	debug: true,          
 };
  
 function Pandoc(text, options = {}) {
@@ -53,7 +54,7 @@ function Pandoc(text, options = {}) {
 		if(window[opt]==options[opt]){console.info(opt, options[opt]);}else{console.warn(opt, options[opt], 'wrong type');}
 	}
 	console.groupEnd();
-	
+
 	if (!debug) {
 		window.console = {
 			log: function () {},
@@ -523,7 +524,9 @@ function Pandoc(text, options = {}) {
         }
         text = _DoHeaders( text );
         text = _DoTables( text );
-        text = _DoGrids( text );
+        if(pandoc){
+        	text = _DoGrids( text );
+        }
         
         text = text
             .replace( /^[ ]{0,2}([ ]?\*[ ]?){3,}[ \t]*$/gm, _HashBlock( "\n<hr" + md_empty_element_suffix + "\n" ) )
@@ -766,7 +769,7 @@ function Pandoc(text, options = {}) {
     var md_reg_DoSetextHeaders = /(^.+?)(?:[ ]+\{#([-_:a-zA-Z0-9]+)\})?[ \t]*\n([-]+|[=]+)[ \t]*\n+/gm;
     var md_reg_DoAtxHeaders = new RegExp(
       '^'
-    + (Pandoc ? '\n' : '') // Pandoc requires a blank line before a header
+    + (Pandoc && !strict ? '\n' : '') // Pandoc requires a blank line before a header
     + (pandoc ? ( strict ? '(#{1,6})(?![.])' : '(#+(?![.])[=+-]*)'): (strict ? '(#{1,6})' : '(#+[=+-]*)') ) // do not include pandoc "#." 
     + '[ \\t]*'
     + '(.+?)'
@@ -1286,8 +1289,7 @@ console.log('underline:', underline, 'overline:', overline);
     }
     
     function _DoGrid_callback( $0, $1, $2, $3, $4 ) {
-    	debug = true;
-
+    	
     	endoflinebug = false;
 		//console.clear();
 		if(debug){console.log(new Date());}
@@ -2149,7 +2151,7 @@ function int2roman(number) {
     
     var md_reg_DoBlockQuotes = new RegExp(
       '('
-    + (pandoc ? '\n\n' : '') // require a blank line before a block quote
+    + (pandoc && !strict ? '\n\n' : '') // require a blank line before a block quote
     +	'('
     +       '[ \\t]*>[ \\t]?'
     +			'.+\\n'

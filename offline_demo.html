@@ -29,13 +29,14 @@
         var prev = '';
         $('#mdtext,input:checkbox').on('keyup change', function(event) {
 			var options = {
-				pandoc : $('#pandoc:checked').val() || false,
-				strict : $('#strict:checked').val()|| false,
-				html5: $('#html5:checked').val()|| false,   
-				pan_xtables: $('#pan_xtables:checked').val()|| false,         
-				md_extra: $('#md_extra:checked').val()|| false,   
-				mdx_xtables : $('#mdx_xtables:checked').val()|| false,   
-				addcoordinates: $('#addcoordinates:checked').val()|| false,  
+				pandoc : $('#pandoc:checked').val()=='true' || false,
+				strict : $('#strict:checked').val()=='true' || false,
+				html5: $('#html5:checked').val()=='true' || false,   
+				pan_xtables: $('#pan_xtables:checked').val()=='true' || false,         
+				md_extra: $('#md_extra:checked').val()=='true' || false,   
+				mdx_xtables : $('#mdx_xtables:checked').val()=='true' || false,   
+				addcoordinates: $('#addcoordinates:checked').val()=='true' || false,
+				debug: $('#debug:checked').val()=='true' || false,  
             };
             var mdtext = $('#mdtext').val();
             if(prev != mdtext || event.type == 'change') {
