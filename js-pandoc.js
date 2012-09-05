@@ -2062,22 +2062,28 @@ function int2roman(number) {
         , "g" );
     
     var md_reg_DoItalicsAndBold_5 = /(?:___|\*\*\*)([\s\S]+?)(?:___|\*\*\*)/g;
+    var md_reg_DoStrikethrough = /~~([\s\S]+?)~~/g;
     
     function _DoItalicsAndBold( text ) {
         var reg = md_reg_DoItalicsAndBold_5;
-        text = text.replace( reg, "<strong><em>$1</em></strong>" );
+        text = text.replace( reg, "<strong><em>$1<!-- 5 --></em></strong>" );
         
         var reg = md_reg_DoItalicsAndBold_1;
-        text = text.replace( reg, "$3<strong>$4</strong>" );
+        text = text.replace( reg, "$3<strong>$4<!-- 1 --></strong>" );
         
         var reg = md_reg_DoItalicsAndBold_2;
-        text = text.replace( reg, "$3<strong>$4</strong>" );
+        text = text.replace( reg, "$3<strong>$4<!-- 2 --></strong>" );
         
         var reg = md_reg_DoItalicsAndBold_3;
-        text = text.replace( reg, "$2<em>$3</em>" );
+        text = text.replace( reg, "$2<em>$3<!-- 3 --></em>" );
         
         var reg = md_reg_DoItalicsAndBold_4;
-        text = text.replace( reg, "$2<em>$3</em>" );
+        text = text.replace( reg, "$2<em>$3<!-- 4 --></em>" );
+
+		if(pandoc){
+			var reg = md_reg_DoStrikethrough;
+			text = text.replace( reg, "<del>$1</del>" );
+        }
         
         return text;
     }
