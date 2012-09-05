@@ -37,9 +37,11 @@ String.prototype.Pandoc = function(options = {}){
 default_options = {
 	pandoc : true,
 	strict : false,
-	html5 : true,
-	debug : false,
-	addcoordinates : false,
+	html5: true,   
+	pan_xtables: true,         
+	md_extra: true,   
+	mdx_xtables : true,   
+	addcoordinates: true,          
 };
  
 function Pandoc(text, options = {}) {
@@ -764,6 +766,7 @@ function Pandoc(text, options = {}) {
     var md_reg_DoSetextHeaders = /(^.+?)(?:[ ]+\{#([-_:a-zA-Z0-9]+)\})?[ \t]*\n([-]+|[=]+)[ \t]*\n+/gm;
     var md_reg_DoAtxHeaders = new RegExp(
       '^'
+    + (Pandoc ? '\n' : '') // Pandoc requires a blank line before a header
     + (pandoc ? ( strict ? '(#{1,6})(?![.])' : '(#+(?![.])[=+-]*)'): (strict ? '(#{1,6})' : '(#+[=+-]*)') ) // do not include pandoc "#." 
     + '[ \\t]*'
     + '(.+?)'
@@ -2146,8 +2149,9 @@ function int2roman(number) {
     
     var md_reg_DoBlockQuotes = new RegExp(
       '('
+    + (pandoc ? '\n\n' : '') // require a blank line before a block quote
     +	'('
-    +		'^[ \\t]*>[ \\t]?'
+    +       '[ \\t]*>[ \\t]?'
     +			'.+\\n'
     +		'(.+\\n)*'
     +		'\\n*'
@@ -2157,13 +2161,9 @@ function int2roman(number) {
     
     function _DoBlockQuotes( text ) {
         var reg = md_reg_DoBlockQuotes;
-        text = text.replace( reg, _DoBlockQuotes_callback );
+		text = text.replace( reg, _DoBlockQuotes_callback );
         return text;
     }
-    
-     
-    
-     
     
     var md_reg_DoBlockQuotes_callback_1 = /^[ \t]*>[ \t]?/gm;
     var md_reg_DoBlockQuotes_callback_2 = /^[ \t]+$/gm;
