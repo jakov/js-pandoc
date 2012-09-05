@@ -22,7 +22,7 @@
     <script>
     $(function() {
         function parse_md() {
-            var result = Markdown($('#mdtext').val());
+            var result = Pandoc($('#mdtext').val());
             $('#result').html(result);
             $('#result-src').text(result);
         }
