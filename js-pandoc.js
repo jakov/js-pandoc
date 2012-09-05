@@ -63,8 +63,9 @@ function Pandoc(text, options = {}) {
 			info: function () {}
 		};
 	}
-
-
+	
+	headers_in_use = [];
+	
     /* Utilities */
     function Array_pad(target, size, value) {
         while(target.length < size) {
@@ -771,20 +772,14 @@ function Pandoc(text, options = {}) {
     + '\\n+'
     , "gm" );
     function _DoHeaders( text ) {
-        // var reg = md_reg_DoHeaders1;
-//         text = text.replace( reg, function( $0, $1, $2 ) {
-//                     var str = '<h1';
-//                     str += ( $2 ) ? ' id=\"' + _UnslashQuotes( $2 ) + '\"' : "";
-//                     str += ">" + _RunSpanGamut( _UnslashQuotes( $1 ) ) + "</h1>";
-//                     return _HashBlock( str ) + "\n\n";
-//                 } );
         var reg = md_reg_DoSetextHeaders;
         text = text.replace( reg, function( $0, $1, $2, $3 ) {
-        			var hx = ($3[0]=='=' ? "h1" : "h2");
+        			var hx = ($3.charAt(0)=='=' ? "h1" : "h2");
                     var str = '<'+hx;
 					var header_text = _RunSpanGamut( _UnslashQuotes( $1 ) );
-					var header_id = ( $2 ? $2 : 'none');
-                    str += ( $2 ) ? ' id=\"' + _UnslashQuotes( $2 ) + '\"' : "";
+					var header_id = ( $2 ? $2 : (pandoc ? _RunHeaderId( header_text ) : false) );
+					headers_in_use.push(header_id);
+                    str += ( header_id ) ? ' id=\"' + header_id + '\"' : "";
                     str += ">" + header_text + "</"+hx+">";
                     return _HashBlock( str ) + "\n\n";
                 } );
@@ -804,16 +799,52 @@ function Pandoc(text, options = {}) {
         			var hx = (level <=6 ? "h" + level : 'span');
         			var cssclass = (level <=6 ? '' : ' class="h'+level+'"');
                     var str = "<" + hx + cssclass;
-                    str += ( $3 ) ? ' id=\"' + _UnslashQuotes( $3 ) + '\"' : "";
-                    str += ">" + _RunSpanGamut( _UnslashQuotes( $2 ) );
+					var header_text = _RunSpanGamut( _UnslashQuotes( $2 ) );
+					var header_id = ( $3 ? $3 : (pandoc ? _RunHeaderId( header_text ) : false) );
+					headers_in_use.push(header_id);
+                    str += ( header_id ) ? ' id=\"' + header_id + '\"' : "";
+                    str += ">" +header_text;
                     str += "</" + hx + ">";
                     return _HashBlock( str ) + "\n\n";
                 } );
         
         return text;
     }
-    function _DoHeaderId( text ){
-    	
+    function _RunHeaderId( header_id = '' ){
+    	console.group('header_id');
+		// * Remove all formatting, links, etc.
+		console.log( header_id = header_id.replace(/\<[^>]*\>?/g, '') );
+		// remove leading and trailing spaces and newlines
+		console.log( header_id = header_id.replace(/^[\s\n]*|[\s\n]$/g, '') );
+		// * Replace all spaces and newlines with hyphens.
+		console.log( header_id = header_id.replace(/[\s\n\–\‐\‐]/g, '-') ); // I included special hyphens
+		// * Remove all punctuation, except underscores, hyphens, and periods.
+		console.log( header_id = header_id.replace(/[^\w-._]/g, '') );
+		// * Convert all alphabetic characters to lowercase.
+		console.log( header_id = header_id.toLowerCase() );
+		// * Remove everything up to the first letter (identifiers may not begin with a number or punctuation mark).
+		console.log( header_id = header_id.replace(/^[\W\d]*/, '') );
+		// * If nothing is left after this, use the identifier "section".
+		console.log( header_id = ( header_id == '' ? 'section' : header_id) );
+		// when several headers have the same text; in this case, the first will get an identifier as described above; the second will get the same identifier with -1 appended; the third with -2; and so on.
+		if(typeof headers_in_use!='undefined'){
+			var new_header = header_id;
+			var new_counter = 1;
+			while( headers_in_use.indexOf(new_header)>=0 ){
+				console.warn(new_header, 'already used');
+				new_header = header_id + '-' + new_counter;
+				new_counter++;
+			}
+			if(new_header != header_id){
+				header_id = new_header;
+				console.info('renamed to:' + header_id);
+			}
+		}
+		else {
+			headers_in_use = [];
+		}
+		console.groupEnd();
+    	return header_id;
     }
     
     
