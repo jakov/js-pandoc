@@ -1254,17 +1254,36 @@ console.log('underline:', underline, 'overline:', overline);
      
     var md_flag_DoGrids = "3ee63c2476f49cd6c03c72e14687b4f7";
     var md_reg_DoGrids1 = new RegExp(
+    (pan_xtables ?
       '^'
     + '(?:'
+    + 	'[ ]{0,' + md_less_than_tab + '}'
+    + 	'(?:[Tt]able[:]|[Tt]abelle[:]|[:])(.*?)\\n' // Multilingual, ignore case
+    + 	'\\n'
+    + ')?'
+    + '('
+    + 	'([ ]{0,' + md_less_than_tab + '})'
+    + 		'[+](?:[-=:; ]+[+])+[ ]*\\n'			// +---------+---------+
+    + 	'\\3'
+    + 		'(?:(?:[^\\n]+)[ ]*\\n)+'				// | content | content | 
+    + 	'\\3'
+    + 		'[+](?:[-=:; ]+[+])+[ ]*\\n'			// +---------+---------+
+    + ')'
+    + '('
+    + 	'\\n'
+    + 	'(?:[Tt]able[:]|[Tt]abelle[:]|[:])(.*?)\\n' // Multilingual
+    + ')?'
+    + '(?=\\n|' + md_flag_DoGrids + ')'//Stop at final double newline.
+    :
+      '^'
+    + '(?:'
+    + 	'()[ ]{0,' + md_less_than_tab + '}'
     + 	'(?:Table[:]|[:])(.*?)\\n'
     + 	'\\n'
     + ')?'
     + '('
-    + 	'[ ]{0,' + md_less_than_tab + '}'
     + 		'[+](?:[-=:; ]+[+])+[ ]*\\n'			// +---------+---------+
-    + 	'[ ]{0,' + md_less_than_tab + '}'
     + 		'(?:(?:[^\\n]+)[ ]*\\n)+'				// | content | content | 
-    + 	'[ ]{0,' + md_less_than_tab + '}'
     + 		'[+](?:[-=:; ]+[+])+[ ]*\\n'			// +---------+---------+
     + ')'
     + '('
@@ -1272,23 +1291,25 @@ console.log('underline:', underline, 'overline:', overline);
     + 	'(?:Table[:]|[:])(.*?)\\n'
     + ')?'
     + '(?=\\n|' + md_flag_DoGrids + ')'//Stop at final double newline.
-    , "gm" );
+
+    )
+    , "gm");
 
     function _DoGrids( text ) {
         text += md_flag_DoGrids;
         var reg = md_reg_DoGrids1;
         
-        text = text.replace( reg, function( $0, $1, $2, $3, $4 ) {
-        	console.log( $0, 'h1', $1, 'table',$2, 'h2',$3, $4 );
+        text = text.replace( reg, function( $0,  $1, $2, indent, $3, $4 ) {
+        	console.log( $0, 'h1', $1, 'table',$2, 'indent', indent, 'h2',$3,  $4 );
             //$0 = $0.replace( /^[ ]*/gm, '' );
-            return _DoGrid_callback( $0, $1, $2, $3, $4 );
+            return _DoGrid_callback( $0, $1, $2,indent, $3, $4 );
         } );
         
         text = text.replace( md_flag_DoGrids, "" );
         return text;
     }
     
-    function _DoGrid_callback( $0, $1, $2, $3, $4 ) {
+    function _DoGrid_callback( $0, $1, $2, indent,$3, $4 ) {
     	
     	endoflinebug = false;
 		//console.clear();
@@ -1318,6 +1339,7 @@ console.log('underline:', underline, 'overline:', overline);
 		var v_align_all = [];
 		var indices = [];
 		for (i = 0; i < arr.length; i++) {
+			arr[i] = arr[i].substr(indent.length);
 		    while (arr[i].length < longest) {
 		        arr[i] += ' ';
 		    }
