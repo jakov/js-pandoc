@@ -20,26 +20,34 @@
     </style>
     <script>
     $(function() {
-        function parse_md() {
-            var result = Pandoc($('#mdtext').val(), {debug:true});
+        function parse_md( text, options ) {
+            var result = Pandoc( text, options );
             $('#result').html(result);
             $('#result-src').text(result);
         }
         var initial = $('#mdtext').val();
-        var prev = initial;
-        $('#mdtext').keyup(function() {
+        var prev = '';
+        $('#mdtext,input:checkbox').on('keyup change', function(event) {
+			var options = {
+				pandoc : $('#pandoc:checked').val() || false,
+				strict : $('#strict:checked').val()|| false,
+				html5: $('#html5:checked').val()|| false,   
+				pan_xtables: $('#pan_xtables:checked').val()|| false,         
+				md_extra: $('#md_extra:checked').val()|| false,   
+				mdx_xtables : $('#mdx_xtables:checked').val()|| false,   
+				addcoordinates: $('#addcoordinates:checked').val()|| false,  
+            };
             var mdtext = $('#mdtext').val();
-            if(prev != mdtext) {
-                parse_md();
+            if(prev != mdtext || event.type == 'change') {
+                parse_md(mdtext, options);
                 prev = mdtext;
             }
         });
         $('#reset').click(function() {
             $('#mdtext').val(initial);
-            prev = initial;
-            parse_md();
+            $('#mdtext').trigger('keyup');
         });
-        parse_md();
+		$('#mdtext').trigger('keyup');
     });
     </script>
 
@@ -272,7 +280,20 @@ Markdow enabled inside HTML when marked by markdown="1" attribute.
     </pre>
   </div>
   
-  <div style="clear:both;">Type your md-text into the textarea above.</div>
+  <p style="clear:both;">Type your md-text into the textarea above.</p>
+  <form style="clear:both;">
+	<fieldset>
+	<legend>Options:</legend>
+		<input type="checkbox" id="pandoc" value="true" checked="checked"/> <label for="pandoc">Pandoc</label>
+		<input type="checkbox" id="strict" value="true"/> <label for="strict">Strict</label>
+		<input type="checkbox" id="html5" value="true" checked="checked"/> <label for="html5">HTML 5</label>
+		<input type="checkbox" id="pan_xtables" value="true" checked="checked"/> <label for="pan_xtables">Pandoc extended Tables</label>
+		<input type="checkbox" id="md_extra" value="true" checked="checked"/> <label for="md_extra">Markdown Extra</label>
+		<input type="checkbox" id="mdx_xtables" value="true" checked="checked"/> <label for="mdx_xtables">Markdown Extra extended Tables</label>
+		<input type="checkbox" id="addcoordinates" value="true" checked="checked"/> <label for="addcoordinates">Add table coordinates</label>	
+		<input type="checkbox" id="debug" value="true"/> <label for="debug">debug</label>
+	<fieldset>
+  </form>
 
       </section>
     </div>
