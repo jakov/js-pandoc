@@ -24,9 +24,29 @@ _emphasis3_   __strong1__   ending_snake_     _starting_snake   snake_case_test
 
 ### Pandoc
 
-~~strikethrough~~ \
-subscript: H~2~O \
-superscript: 2^10^ = 1024
+~~strikethrough~~; ~~more strikethrough~~ \
+subscript: CO~2~; ~6~C; H~2~O; subscript~with\ escaped\ blanks~ \
+superscript: 2^10^ = 1024; ^14^C; some^more^power base^power\ with\ escaped\ blanks^
+
+Escaping characters:
+--------------------
+### Markdown
+```
+\`*_{}[]()>#+-.!
+```
+
+### Pandoc
+> Except inside a code block or inline code, any punctuation or space character preceded by a backslash will be treated literally
+
+
+
+> A backslash-escaped space is parsed as a nonbreaking space.
+
+```
+\ 
+```
+Like\ all\ spaces\ in\ this\ test.
+
 
 LINKS
 ---------------
@@ -66,7 +86,35 @@ atx-style (closing #'s are optional):
 
 ###### Header 6
 
-#### My extension: (level 4)
+### Pandoc
+
+> This identifier is based on the text of the header. To derive the identifier from the header text,
+> 
+> * Remove all formatting, links, etc.
+  * Remove all punctuation, except underscores, hyphens, and periods.
+  * Replace all spaces and newlines with hyphens.
+  * Convert all alphabetic characters to lowercase.
+  * Remove everything up to the first letter (identifiers may not begin with a number or punctuation mark).
+  * If nothing is left after this, use the identifier "section".
+  
+###### Header identifiers in HTML
+header-identifiers-in-html
+
+######Dogs?–in my house?
+dogs--in-my-house
+
+######HTML, S5, or RTF?
+html-s5-or-rtf
+
+######3. Applications
+applications
+
+######33
+section
+
+### Markdown Extra
+
+### My extension: (level 4)
 
 This was suggested by a friend of mine:
 
@@ -74,11 +122,13 @@ This was suggested by a friend of mine:
 
 #+ one level deeper (level5)
 
-##= same level as before (level 5)
+#++ again two levels deeper (level7)
 
-You can use as many '#'s as you want, as they obviously cant affect the level.
+##= same level as before (level 7)
 
-##- one level up (level 4 again)
+You can use as many '#'s as you want; they don't affect the level.
+
+##- one level up (level 6 again)
 
 
 
@@ -893,9 +943,10 @@ Form Elements
 	[_] and [*] for checkboxes
 	(_) and (*) for radios etc.
 
-https://github.com/maleldil/wmd/blob/master/showdown.js
+* https://github.com/maleldil/wmd/blob/master/showdown.js
+* uses MIT type license
 
-uses MIT type license
+
 
 Command line usage
 ------------------

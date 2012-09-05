@@ -759,9 +759,8 @@ function Pandoc(text, options = {}) {
     
      
     
-    var md_reg_DoHeaders1 = /(^.+?)(?:[ ]+\{#([-_:a-zA-Z0-9]+)\})?[ \t]*\n=+[ \t]*\n+/gm; // setext-style
-    var md_reg_DoHeaders2 = /(^.+?)(?:[ ]+\{#([-_:a-zA-Z0-9]+)\})?[ \t]*\n-+[ \t]*\n+/gm; // setext-style
-    var md_reg_DoHeaders3 = new RegExp(
+    var md_reg_DoSetextHeaders = /(^.+?)(?:[ ]+\{#([-_:a-zA-Z0-9]+)\})?[ \t]*\n([-]+|[=]+)[ \t]*\n+/gm;
+    var md_reg_DoAtxHeaders = new RegExp(
       '^'
     + (pandoc ? ( strict ? '(#{1,6})(?![.])' : '(#+(?![.])[=+-]*)'): (strict ? '(#{1,6})' : '(#+[=+-]*)') ) // do not include pandoc "#." 
     + '[ \\t]*'
@@ -772,22 +771,25 @@ function Pandoc(text, options = {}) {
     + '\\n+'
     , "gm" );
     function _DoHeaders( text ) {
-        var reg = md_reg_DoHeaders1;
-        text = text.replace( reg, function( $0, $1, $2 ) {
-                    var str = '<h1';
+        // var reg = md_reg_DoHeaders1;
+//         text = text.replace( reg, function( $0, $1, $2 ) {
+//                     var str = '<h1';
+//                     str += ( $2 ) ? ' id=\"' + _UnslashQuotes( $2 ) + '\"' : "";
+//                     str += ">" + _RunSpanGamut( _UnslashQuotes( $1 ) ) + "</h1>";
+//                     return _HashBlock( str ) + "\n\n";
+//                 } );
+        var reg = md_reg_DoSetextHeaders;
+        text = text.replace( reg, function( $0, $1, $2, $3 ) {
+        			var hx = ($3[0]=='=' ? "h1" : "h2");
+                    var str = '<'+hx;
+					var header_text = _RunSpanGamut( _UnslashQuotes( $1 ) );
+					var header_id = ( $2 ? $2 : 'none');
                     str += ( $2 ) ? ' id=\"' + _UnslashQuotes( $2 ) + '\"' : "";
-                    str += ">" + _RunSpanGamut( _UnslashQuotes( $1 ) ) + "</h1>";
-                    return _HashBlock( str ) + "\n\n";
-                } );
-        var reg = md_reg_DoHeaders2;
-        text = text.replace( reg, function( $0, $1, $2 ) {
-                    var str = '<h2';
-                    str += ( $2 ) ? ' id=\"' + _UnslashQuotes( $2 ) + '\"' : "";
-                    str += ">" + _RunSpanGamut( _UnslashQuotes( $1 ) ) + "</h2>";
+                    str += ">" + header_text + "</"+hx+">";
                     return _HashBlock( str ) + "\n\n";
                 } );
         
-        var reg = md_reg_DoHeaders3;
+        var reg = md_reg_DoAtxHeaders;
         text = text.replace( reg, function( $0, $1, $2, $3 ) {
         			[, dashes, plusminus] = $1.match(/(#+)([=+-]*)/);
         			level = (plusminus.length==0 ? dashes.length : (window.previouslevel || 1));
@@ -799,8 +801,8 @@ function Pandoc(text, options = {}) {
         			}
         			level = (level<1 ? 1 : level);
         			window.previouslevel = level;
-        			hx = (level <=6 ? "h" + level : 'span');
-        			cssclass = (level <=6 ? '' : ' class="h'+level+'"');
+        			var hx = (level <=6 ? "h" + level : 'span');
+        			var cssclass = (level <=6 ? '' : ' class="h'+level+'"');
                     var str = "<" + hx + cssclass;
                     str += ( $3 ) ? ' id=\"' + _UnslashQuotes( $3 ) + '\"' : "";
                     str += ">" + _RunSpanGamut( _UnslashQuotes( $2 ) );
@@ -809,6 +811,9 @@ function Pandoc(text, options = {}) {
                 } );
         
         return text;
+    }
+    function _DoHeaderId( text ){
+    	
     }
     
     
@@ -2066,19 +2071,19 @@ function int2roman(number) {
     
     function _DoItalicsAndBold( text ) {
         var reg = md_reg_DoItalicsAndBold_5;
-        text = text.replace( reg, "<strong><em>$1<!-- 5 --></em></strong>" );
+        text = text.replace( reg, (debug ? "<strong><em>$1<!-- 5 --></em></strong>" : "<strong><em>$1</em></strong>") );
         
         var reg = md_reg_DoItalicsAndBold_1;
-        text = text.replace( reg, "$3<strong>$4<!-- 1 --></strong>" );
+        text = text.replace( reg, (debug ? "$3<strong>$4<!-- 1 --></strong>" : "$3<strong>$4</strong>") );
         
         var reg = md_reg_DoItalicsAndBold_2;
-        text = text.replace( reg, "$3<strong>$4<!-- 2 --></strong>" );
+        text = text.replace( reg, (debug ? "$3<strong>$4<!-- 2 --></strong>" : "$3<strong>$4</strong>") );
         
         var reg = md_reg_DoItalicsAndBold_3;
-        text = text.replace( reg, "$2<em>$3<!-- 3 --></em>" );
+        text = text.replace( reg, (debug ? "$2<em>$3<!-- 3 --></em>" : "$2<em>$3</em>") );
         
         var reg = md_reg_DoItalicsAndBold_4;
-        text = text.replace( reg, "$2<em>$3<!-- 4 --></em>" );
+        text = text.replace( reg, (debug ? "$2<em>$3<!-- 4 --></em>" : "$2<em>$3</em>") );
 
 		if(pandoc){
 			var reg = md_reg_DoStrikethrough;
