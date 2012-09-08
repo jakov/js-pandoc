@@ -892,7 +892,7 @@ function Pandoc(text, options = {}) {
       '^'
     + '('
     + '[ ]{0,' + md_less_than_tab + '}'
-    + 	'(?:Table[:]|[:]).*?\\n'				// captionabove
+    + 	'(?:Table[:]|[:])[\\S\\s]*?[^\\n]\\n'				// captionabove
     + 	'\\n'
     + ')?'
     + '[ ]{0,' + md_less_than_tab + '}'
@@ -919,7 +919,7 @@ function Pandoc(text, options = {}) {
     + '('
     + '[ ]{0,' + md_less_than_tab + '}'
     + 	'\\n'
-    + 	'(?:Table[:]|[:]).*?\\n'				// captionbelow
+    + 	'(?:Table[:]|[:])[\\S\\s]*?[^\\n]\\n'				// captionbelow
     + ')?'
     + '(?=\\n|' + md_flag_DoTables + ')'//Stop at final double newline.
     , "gm" );
@@ -1306,11 +1306,12 @@ console.log('underline:', underline, 'overline:', overline);
     + 		'[+](?:[-=:; ]+[+])+[ ]*\\n'			// +---------+---------+
     + ')'
     + '('
-    + 	'\\n'										// exactly one blank line after the table
+    + 	'\\n'										// exactly one blank line after the tables
     + 	'(?:[Tt]able[:]|[Tt]abelle[:]|[:])([\\S\\s]*?)\\n' // Multilingual
     + ')?'
     + '(?=\\n|' + md_flag_DoGrids + ')'//Stop at final double newline.
     :
+      // original pandoc tables:
       '^'
     + '(?:'
     + 	'[ ]{0,' + md_less_than_tab + '}'
@@ -1318,7 +1319,7 @@ console.log('underline:', underline, 'overline:', overline);
     + 	'\\n'
     + ')?'
     + '(()'
-    + 		'[+](?:[-]+[+])+[ ]*\\n(?!\\n)'			// +---------+---------+
+    + 		'[+](?:[-]+[+])+[ ]*\\n(?!\\n)'		// +---------+---------+
     + 		'(?:'
     +           '(?:[|][^\\n]+[ ]*\\n)+'		// | header | header  | 
     + 			'[+](?:[=]+[+])+[ ]*\\n'   		// +=========+=========+
