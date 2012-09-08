@@ -529,28 +529,28 @@ vertical align for the rest of the *row*.
 Maybe some symbol instead of ":" for horizontal pass on of horizontal align?
 
 
-	|----------|---------|---------|
-	|> center >| center  | center  |
-	| default  | default | default |
-	|----------|---------|---------|
+|----------|---------|---------|
+|> center >| center  | center  |
+| default  | default | default |
+|----------|---------|---------|
 
 
 Then ">" would maybe pass on vertical align horizontally too?
 
-	|----------|---------|---------|
-	|> middle  | middle  | middle  |
-	'>         '         '         '
-	| default  | default | default |
-	|----------|---------|---------|
+|----------|---------|---------|
+|> middle  | middle  | middle  |
+'>         '         '         '
+| default  | default | default |
+|----------|---------|---------|
 
 
 And ":" would pass on horizontal *and* vertical align vertically?
 
-	|----------|---------|---------|
-	|: middle  | default | default |
-	':         '         '         '
-	| middle   | default | default |
-	|----------|---------|---------|
+|----------|---------|---------|
+|: middle  | default | default |
+':         '         '         '
+| middle   | default | default |
+|----------|---------|---------|
 
 
 
@@ -573,6 +573,59 @@ Pandoc Style Tables
 | G | H | I |
 +---+---+---+
 
+Lazy Pandoc gridtables:
+
++----+----+
+|1234567890jjölk
++=+
+|qwertzuiop
++-+
+
+* When a text line in a tabel contains only "|", pandoc behaves strangely.
+However, I'm not going to reproduce this behaviour.
+My script will simply ignore such tables. 
+
+Idea for gridtables lazy style:
+
+:with header
+
++
+|one   two   three
++=====+=====+=====+
+|four  five  six
++
+|seven eight nine
+
+
+: without header
+
++-----+-----+-----+
+|one   two   three
++
+|four  five  six
++
+|seven eight nine
++
+
+
+:rows only
+
++
+|first row
++
+|second row
++
+|third row
++
+
+
+: columns only
+
++-----+-----+-----+
+|one   two   three
+|one   two   three
+|one   two   three
++
 
 
 #### My extensions
@@ -665,6 +718,57 @@ without borders:
 +   +   +   +
   G   H   I  
 +   +   +   +
+
+
+both:
+
++---+---+---+---+
+| A | B   C | X |
++---+       +---+
+| D | E   F | Y |
++---+---+---+---+
+| G | H | I | Z |
++---+---+---+---+
+
+
+: Bug: this should be the same, but H & I fall together
+
++---+-------+---+
+| A | B   C | X |
++---+       +---+
+| D | E   F | Y |
++---+---+---+---+
+| G | H | I | Z |
++---+---+---+---+
+
+
+:bug: "|" should be a shortcut for "|,+,|", and "-" should be a shortcut for "-+-"
+
++---+-------+ 
+| A | B   C | 
++---+       | 
+| D | E   F | 
++---+---+---+ 
+| G | H | I | 
++---+---+---+ 
+
+
++   +       +
+  A   B   C  
++   +       |
+  D   E   F  
++   +   -   +
+  G   H   I  
++   +   +   +
+
+
++   +   +   +   +
+  A   B   C | X  
++   +       +   +
+  D   E   F | Y  
++   +  -+-  +   +
+  G   H   I   Z  
++   +   +   +   +
 
 ##### text-align
 

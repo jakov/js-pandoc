@@ -33,6 +33,23 @@
 String.prototype.Pandoc = function(options = {}){
 	return Pandoc( this, options);
 }
+
+Array.prototype.sum = function() {
+	for (var i = 0, L = this.length, sum = 0; i < L; sum += this[i++]);
+	return sum;
+}
+String.prototype.regexIndexOf = function (regex, startpos) {
+	var indexOf = this.substring(startpos || 0).search(regex);
+	return (indexOf >= 0) ? (indexOf + (startpos || 0)) : indexOf;
+}
+Array.prototype.regexIndexOf = function (regex, startpos = 0) {
+	for(var x = startpos, len = this.length; x < len; x++){
+		if(typeof this[x] != 'undefined' && (''+this[x]).match(regex)){
+			return x;
+		}
+	}
+	return -1;
+}
  
 default_options = {
 	pandoc : true,
@@ -795,7 +812,7 @@ function Pandoc(text, options = {}) {
         text = text.replace( reg, function( $0, $1, $2, $3 ) {
         			[, dashes, plusminus] = $1.match(/(#+)([=+-]*)/);
         			level = (plusminus.length==0 ? dashes.length : (window.previouslevel || 1));
-        			for(c=0;c<plusminus.length;c++){
+        			for(var c=0, len = plusminus.length; c<len; c++){
         				switch(plusminus[c]){
         					case "+": level++;break;
         					case "-": level--;break;
@@ -958,7 +975,7 @@ console.log('underline:', underline, 'overline:', overline);
         //var thead = [];
         //var tbody = [];
         
-        var object = [];
+        var two_dim_arr = [];
         //var area = 'thead';
         
         theadsize = 0;
@@ -966,14 +983,15 @@ console.log('underline:', underline, 'overline:', overline);
         tfootsize = 0;
         
         rownum = 1;
-        object[0] = []; //this enables you to even start your table with `'` or `^` cells (in case you get loonatic)
+        two_dim_arr[0] = []; //this enables you to even start your table with `'` or `^` cells (in case you get loonatic)
         
         function fillrowuntil(rownum, colnum){
         	tn = {};
-        	beforelength = object[rownum].length;
-        	console.log( typeof object[rownum][beforelength-1] == 'object' ? object[rownum][beforelength-1].colnum + object[rownum][beforelength-1].colspan : 0+1);
+        	beforelength = two_dim_arr[rownum].length;
+        	console.log( typeof two_dim_arr[rownum][beforelength-1] == 'object' ? two_dim_arr[rownum][beforelength-1].colnum + two_dim_arr[rownum][beforelength-1].colspan : 0+1);
         	
-        	for(pointer = ( typeof object[rownum][beforelength-1] == 'object' ? object[rownum][beforelength-1].colnum + object[rownum][beforelength-1].colspan : 0+1); pointer <= colnum; pointer ++){
+        	var pointer = ( typeof two_dim_arr[rownum][beforelength-1] == 'object' ? two_dim_arr[rownum][beforelength-1].colnum + two_dim_arr[rownum][beforelength-1].colspan : 0+1);
+        	for(pointer; pointer <= colnum; pointer ++){
         		tn.raw = '|';
 				tn.text = ' ' + '\n';
 				tn.l = ' ';
@@ -986,23 +1004,14 @@ console.log('underline:', underline, 'overline:', overline);
 				tn.h_align = 'default';
 				tn.v_align = 'default';
 				
-				object[rownum].push(tn);
+				two_dim_arr[rownum].push(tn);
 				console.warn('this row was extended to be able to put the content somewhere');
 			}
         }
         
         for(y=0, rows_len = table.length; y < rows_len; y++ ){
 			console.group('y:', y);
-        	//row = '';
-        	/*if(y==0 && y<und){
-        		rownum = 0;
-        		//output += '<thead>\n';
-        	}
-        	else if(y==und+1){
-        		rownum = 0;
-        		//output += '<tbody>\n';
-        	}*/
-			object[rownum] = [];
+			two_dim_arr[rownum] = [];
         
         	table[y] = table[y]
         	//remove trailing spaces and the last bar
@@ -1062,15 +1071,17 @@ console.log('underline:', underline, 'overline:', overline);
 								td.rowspan = 1;
 								td.h_align = h_align;
 								td.v_align = 'default';
+								if(v_header[colnum]==true){
+									td.th = true;
+								}
 								
 								console.log(s,l,text,r,z.length+1, h_align);
 								
-								object[rownum][colnum] = td;
+								two_dim_arr[rownum][colnum] = td;
 								
 								colnum += td.colspan;		
 	        				}
 	        				else {
-	        					
 	        					if(text.match(/[=]/)){
 	        						v_header[colnum] = true;
 	        						console.log(v_header);
@@ -1086,11 +1097,11 @@ console.log('underline:', underline, 'overline:', overline);
 	        			break;
 	        			case "^":
 	        				if(!(y+1==underline || y+1==overline)){
-	        					console.log(object[rownum-1].length-1,colnum);
+	        					console.log(two_dim_arr[rownum-1].length-1,colnum);
 	        					fillrowuntil(rownum-1, colnum);
 	        						        				
-	        					if(colnum<object[rownum-1].length){
-									tu = object[rownum-1][colnum];
+	        					if(colnum<two_dim_arr[rownum-1].length){
+									tu = two_dim_arr[rownum-1][colnum];
 									tu.rowspan ++;	
 	        					}
 								else{
@@ -1101,8 +1112,8 @@ console.log('underline:', underline, 'overline:', overline);
 	        				if(!(y+1==underline || y+1==overline)){
 	        					fillrowuntil(rownum-1, colnum);
 	        				
-	        					if(colnum<object[rownum-1].length){
-	        						tu = object[rownum-1][colnum];
+	        					if(colnum<two_dim_arr[rownum-1].length){
+	        						tu = two_dim_arr[rownum-1][colnum];
 	        						tu.raw += raw + '\n';
 									tu.text += text+ '\n';
 									tu.l += l;
@@ -1125,7 +1136,7 @@ console.log('underline:', underline, 'overline:', overline);
 									}
 
 									if(colnum>0 ){
-										tl = object[rownum-1][colnum-1];
+										tl = two_dim_arr[rownum-1][colnum-1];
 										if(tl.v_align_to_right){
 											tu.v_align = tl.v_align;
 											console.warn('i took the v_align from my left neighbour');
@@ -1192,63 +1203,88 @@ console.log('underline:', underline, 'overline:', overline);
         spitoutabove = captionabove;
         spitoutbelow = captionbelow;
 	
-		 captionabove = captionabove.replace(/^Table[:]|[:]/, '').trim();
-		 captionbelow = captionbelow.replace(/^Table[:]|[:]/, '').trim();
+		captionabove = captionabove.replace(/^Table[:]|[:]/, '').trim();
+		captionbelow = captionbelow.replace(/^Table[:]|[:]/, '').trim();
 		 
-		 captionabove = (captionabove=='' ? false : captionabove );
-		 captionbelow = (captionbelow=='' ? false : captionbelow );
+		captionabove = (captionabove=='' ? false : captionabove );
+		captionbelow = (captionbelow=='' ? false : captionbelow );
         
         console.log(captionabove);
         console.log(captionbelow);
 
         output = '';
         output += (captionabove ? '' : spitoutabove + '\n' ); //spit out the first table header if it doesnt contain anything
-        output += '<table>\n';
-        
-        output += ( (captionabove || captionbelow ) ? '<caption>' + _RunSpanGamut(captionabove || captionbelow) + '</caption>\n' : '');
-        theadbodyfootsize = object.length;
-        for(rownum in object){
-        	
-        	//output += '<'+(rownum<theadsize ? 'thead' : rownum<theadbodysize ?  'tbody': 'tfoot')+'>\n';
-			output += (theadsize && rownum==0 ? '<thead>\n' : rownum==theadsize ? '<tbody>\n': rownum==theadsize+tbodysize ? '<tfoot>\n': '');
-			output += '<tr>\n';
-			for(colnum in object[rownum]){
-				td = object[rownum][colnum];
-				block = _RunBlockGamut( td.text.replace(/[ ]*$/gm, '') );
-				// if the block only consists of the first paragraph
-				if( (block.match(/^<p>[\s\S]*?<\/p>/) || [''])[0].length == block.length){
-					// strip away the <p>
-					block = block.replace(/^<p>|<\/p>$/g, '');
-				}
-				tc = (rownum<theadsize || v_header[colnum] || rownum>=theadsize+tbodysize ? 'th' : 'td');
-				colspan = (td.colspan>1 ? ' colspan="'+td.colspan+'"': '');
-				rowspan = (td.rowspan>1 ? ' rowspan="'+td.rowspan+'"': '');
-				coord = (addcoordinates ? ' class="tc-'+td.colnum+'_'+td.rownum+'"':'');
-				td.v_align = (td.v_align=='justify' ? 'middle' : td.v_align);
-				style = '';
-				if( td.h_align!='default' || td.v_align!='default' ){			
-					if(html5){
-						style = ' style="';
-						style += (td.h_align!='default' ? 'text-align:'+td.h_align+';' : '');
-						style += (td.v_align!='default' ? 'vertical-align:'+td.v_align+';' : '');
-						style += '"';
-					}
-					else {
-						style += (td.h_align!='default' ? ' align="'+td.h_align+'"' : '');
-						style += (td.v_align!='default' ? ' valign="'+td.v_align+'"' : '');					
-					}
-				}
-				output += '<'+tc+colspan+rowspan+coord+style+'>'+block+'</'+tc+'>\n';
-			}
-			output += '</tr>\n';
-			output += (rownum==theadsize-1 ? '</thead>\n' : rownum==theadsize+tbodysize-1 ? '</tbody>\n' : rownum==theadsize+tbodysize+tfootsize-1 ? '</tfoot>\n' : '');
-        }
-        output += '</table>';
+        output += _printTable( two_dim_arr, [theadsize, tbodysize, tfootsize], (captionabove || captionbelow ) );
         output += ( captionbelow ? captionabove ? '\n' + spitoutbelow : '' : '\n' + spitoutbelow ); // spit out the superfluous second table caption
         console.log(output);
 		
         return _HashBlock( output ) + "\n";
         
+    }
+    function _printTable( two_dim_arr, [theadsize, tbodysize, tfootsize], caption = '', cols = false){
+    	var output = '<table>\n';
+        output += ( caption ? '<caption>' + _RunSpanGamut( caption ) + '</caption>\n' : '');
+		if(cols){
+			// <col width="8%" />
+			columns = 80;
+			total = cols.sum();
+			divisor = ( total > columns ? total : columns );
+			var cols_length = cols.length;
+			for (var x = 0; x < cols_length; x++) {
+				var percent = Math.round( cols[x]*100/divisor );
+				if(html5){
+					output += '<col style="width:'+ percent +'%" />\n';
+				}
+				else{
+					output += '<col width="'+ percent +'%" />\n';
+				}
+			}
+		}
+        theadbodyfootsize = two_dim_arr.length;
+        for(var rownum=0; rownum < theadbodyfootsize; rownum++){
+        	//output += '<'+(rownum<theadsize ? 'thead' : rownum<theadbodysize ?  'tbody': 'tfoot')+'>\n';
+			output += (theadsize && rownum==0 ? '<thead>\n' : rownum==theadsize ? '<tbody>\n': rownum==theadsize+tbodysize ? '<tfoot>\n': '');
+			output += '<tr>\n';
+			two_dim_arr_rownum_length = two_dim_arr[rownum].length;
+			for(var colnum = 0; colnum < two_dim_arr_rownum_length; colnum++){
+				var td = two_dim_arr[rownum][colnum];
+				if( typeof td != 'undefined'){
+					console.log(rownum, colnum, td.text);
+					block = _RunBlockGamut( td.text.replace(/[ ]*$/gm, '') );
+					// if the block only consists of the first paragraph
+					if( (block.match(/^<p>[\s\S]*?<\/p>/) || [''])[0].length == block.length){
+						// strip away the <p>
+						block = block.replace(/^<p>|<\/p>$/g, '');
+					}
+					tc = (rownum<theadsize || td.th || rownum>=theadsize+tbodysize ? 'th' : 'td');
+					colspan = (td.colspan>1 ? ' colspan="'+td.colspan+'"': '');
+					rowspan = (td.rowspan>1 ? ' rowspan="'+td.rowspan+'"': '');
+					coord = (addcoordinates ? ' class="tc-'+td.colnum+'_'+td.rownum+'"':'');
+					td.v_align = (td.v_align=='justify' ? 'middle' : td.v_align);
+					style = '';
+					if( td.h_align!='default' || td.v_align!='default' ){			
+						if(html5){
+							style = ' style="';
+							style += (td.h_align!='default' ? 'text-align:'+td.h_align+';' : '');
+							style += (td.v_align!='default' ? 'vertical-align:'+td.v_align+';' : '');
+							style += '"';
+						}
+						else {
+							style += (td.h_align!='default' ? ' align="'+td.h_align+'"' : '');
+							style += (td.v_align!='default' ? ' valign="'+td.v_align+'"' : '');					
+						}
+					}
+					output += '<'+tc+colspan+rowspan+coord+style+'>'+block+'</'+tc+'>\n';
+				}
+			}
+			output += '</tr>\n';
+			console.log((rownum==theadsize-1 ? '</thead>\n' : rownum==theadsize+tbodysize-1 ? '</tbody>\n' : rownum==theadsize+tbodysize+tfootsize-1 ? '</tfoot>\n' : ''));
+			output += (rownum==theadsize-1 ? '</thead>\n' : rownum==theadsize+tbodysize-1 ? '</tbody>\n' : rownum==theadsize+tbodysize+tfootsize-1 ? '</tfoot>\n' : '');
+		
+        }
+        output += '</table>';
+        console.log(output);
+        return output;
     }
     
      
@@ -1258,7 +1294,7 @@ console.log('underline:', underline, 'overline:', overline);
       '^'
     + '(?:'
     + 	'[ ]{0,' + md_less_than_tab + '}'
-    + 	'(?:[Tt]able[:]|[Tt]abelle[:]|[:])(.*?)\\n' // Multilingual, ignore case
+    + 	'(?:[Tt]able[:]|[Tt]abelle[:]|[:])([\\S\\s]*?[^\\n])\\n' // Multilingual, ignore case // for exactly one blank line before the table use ([\\S\\s]*?[^\\n])
     + 	'\\n'
     + ')?'
     + '('
@@ -1270,25 +1306,31 @@ console.log('underline:', underline, 'overline:', overline);
     + 		'[+](?:[-=:; ]+[+])+[ ]*\\n'			// +---------+---------+
     + ')'
     + '('
-    + 	'\\n'
-    + 	'(?:[Tt]able[:]|[Tt]abelle[:]|[:])(.*?)\\n' // Multilingual
+    + 	'\\n'										// exactly one blank line after the table
+    + 	'(?:[Tt]able[:]|[Tt]abelle[:]|[:])([\\S\\s]*?)\\n' // Multilingual
     + ')?'
     + '(?=\\n|' + md_flag_DoGrids + ')'//Stop at final double newline.
     :
       '^'
     + '(?:'
-    + 	'()[ ]{0,' + md_less_than_tab + '}'
-    + 	'(?:Table[:]|[:])(.*?)\\n'
+    + 	'[ ]{0,' + md_less_than_tab + '}'
+    + 	'(?:Table[:]|[:])([\\S\\s]*?)\\n'
     + 	'\\n'
     + ')?'
-    + '('
-    + 		'[+](?:[-=:; ]+[+])+[ ]*\\n'			// +---------+---------+
-    + 		'(?:(?:[^\\n]+)[ ]*\\n)+'				// | content | content | 
-    + 		'[+](?:[-=:; ]+[+])+[ ]*\\n'			// +---------+---------+
+    + '(()'
+    + 		'[+](?:[-]+[+])+[ ]*\\n(?!\\n)'			// +---------+---------+
+    + 		'(?:'
+    +           '(?:[|][^\\n]+[ ]*\\n)+'		// | header | header  | 
+    + 			'[+](?:[=]+[+])+[ ]*\\n'   		// +=========+=========+
+    +		')?'
+    + 		'(?:'
+    +           '(?:[|][^\\n]+[ ]*\\n)+'		// | content | content  | 
+    + 			'[+](?:[-]+[+])+[ ]*\\n'  	 	// +---------+---------+
+    +		')*'  	
     + ')'
     + '('
-    + 	'\\n'
-    + 	'(?:Table[:]|[:])(.*?)\\n'
+    + 	'\\n+'
+    + 	'(?:Table[:]|[:])([\\S\\s]*?)\\n'
     + ')?'
     + '(?=\\n|' + md_flag_DoGrids + ')'//Stop at final double newline.
 
@@ -1309,121 +1351,63 @@ console.log('underline:', underline, 'overline:', overline);
         return text;
     }
     
-    function _DoGrid_callback( $0, $1, $2, indent,$3, $4 ) {
-    	
-    	endoflinebug = false;
-		//console.clear();
-		if(debug){console.log(new Date());}
-		default_h_align = (strict ? 'left' : 'default');
-		default_v_align = 'default';
-		markdown = false;
-		String.prototype.regexIndexOf = function (regex, startpos) {
-		    var indexOf = this.substring(startpos || 0).search(regex);
-		    return (indexOf >= 0) ? (indexOf + (startpos || 0)) : indexOf;
-		}
-		Array.prototype.regexIndexOf = function (regex, startpos = 0) {
-			len = this.length;
-			for(x = startpos; x < len; x++){
-				if(typeof this[x] != 'undefined' && (''+this[x]).match(regex)){
-					return x;
+	function _DoGrid_callback( $0, captionabove, table, indent,spitoutbelow, captionbelow ) {
+		
+    	if(pan_xtables){
+			
+			endoflinebug = false;
+			//console.clear();
+			if(debug){console.log(new Date());}
+			default_h_align = 'left';
+			default_v_align = 'default';
+			markdown = false;
+			arr = table.split('\n');
+			longest = 0;
+			arr[arr.length] = ''; // this is for lookahead, see d = arr[y2+1].charAt(x2);
+			table = [];
+			rows = [];
+			var h_align_all = [];
+			var v_align_all = [];
+			var indices = [];
+			for (i = 0; i < arr.length; i++) {
+				arr[i] = arr[i].substr(indent.length);
+				while (arr[i].length < longest) {
+					arr[i] += ' ';
 				}
-			}
-			return -1;
-		}
-		arr = $2.split('\n');
-		longest = 0;
-		arr[arr.length] = ''; // this is for lookahead, see d = arr[y2+1].charAt(x2);
-		table = [];
-		rows = [];
-		var h_align_all = [];
-		var v_align_all = [];
-		var indices = [];
-		for (i = 0; i < arr.length; i++) {
-			arr[i] = arr[i].substr(indent.length);
-		    while (arr[i].length < longest) {
-		        arr[i] += ' ';
-		    }
-		    longest = arr[i].length;
-		    r = 0;
-		    x2 = -1;
-		    
-		    if(debug){console.warn(i);}
-		    while (arr[i].indexOf('+', r) >= 0) {
-		        ind = arr[i].indexOf('+', r);
-
-		        if (i > 1) {
-					if(debug){console.log(indices.join(''));}
-		            x1 = ind * 1 || 0;
-		            x2 = indices.regexIndexOf(/\d/, ind + 1) * 1 || 0;
-		            y1 = indices[ind] * 1 || 0;
-		            y2 = i * 1 || 0;
-
-		            if (x2 < 0) {
-		                if(debug){console.warn('end of columns');}
-		                rows[rows.length] = i;
-		                break;
-		            } else {
-		                if(debug){console.info([x1, y1], [x2, y2]);}
-		            }
-
-		            //  a    | 
-		            // bzc  -+-
-		            //  d    |
-
-		            a = arr[y2 - 1].charAt(x2);
-		            b = arr[y2].charAt(x2 - 1);
-		            c = arr[y2].charAt(x2 + 1);
-		            d = arr[y2 + 1].charAt(x2);
-		            z = arr[y2].charAt(x2);
-		            
-					border = {};
-		            border['top'] = arr[y1].substring(x1 + 1, x2);
-		            border['bottom'] = arr[y2].substring(x1 + 1, x2);
-		            //console.log('{'+border['bottom']+'}',  !border['bottom'].match(/^[-+=:; ]+$/) );
+				longest = arr[i].length;
+				r = 0;
+				x2 = -1;
 				
-					border['left'] = border['right'] = '';
-					for (y = y1 + 1; y < y2; y++) {
-						text += arr[y].substring(x1 + 1, x2) + '\n';
-						border['left'] += arr[y].substr(x1, 1);
-						border['right'] += arr[y].substr(x2, 1);
-					}
-		            
-		            colspan = 1;
-		            
-		            // horizontal traverse
-		            while (z.match(/[ -]/) || (
-		            //  a    _ 
-					// bzc  -+-
-					//  d    # 
-		            a == ' '
-		            && b.match(/[-=:;]/) && c.match(/[-=:;]/)
-		            && d.match(/[|=:; ]|$/)
-		            )
-		            || !border['right'].match(/^[|+=:; ]+$/) // see "J" in the example
-		            ) {
-		                if (a == ' ' && b.match(/[-=:;]/) && c.match(/[-=:;]/) && d.match(/[|=:; ]|$/)
-		                || !border['right'].match(/^[|+=:; ]+$/)
-		            	) {
-		                    indices[x2] = i;
-		                    console.warn(a + '\n' + b + z + c + '\n' + d);
-		                }
-		                colspan++;
-		                
-		                x2 = indices.regexIndexOf(/\d/, x2 + 1) * 1;
-		                
-		                if (x2 < 0 || arr[y2].charAt(x2 + 1) == '') {
-							if(debug){console.error('end of columns in hor traverse!');}
+				if(debug){console.warn(i);}
+				while (arr[i].indexOf('+', r) >= 0) {
+					ind = arr[i].indexOf('+', r);
+	
+					if (i > 1) {
+						if(debug){console.log(indices.join(''));}
+						x1 = ind * 1 || 0;
+						x2 = indices.regexIndexOf(/\d/, ind + 1) * 1 || 0;
+						y1 = indices[ind] * 1 || 0;
+						y2 = i * 1 || 0;
+	
+						if (x2 < 0) {
+							if(debug){console.warn('end of columns');}
 							rows[rows.length] = i;
-							endoflinebug = true;
 							break;
+						} else {
+							if(debug){console.info([x1, y1], [x2, y2]);}
 						}
-		            		                
-		                a = arr[y2 - 1].charAt(x2);
-		                b = arr[y2].charAt(x2 - 1);
-		                c = arr[y2].charAt(x2 + 1);
-		                d = arr[y2 + 1].charAt(x2);
-		                z = arr[y2].charAt(x2);
-		                
+	
+						//  a    | 
+						// bzc  -+-
+						//  d    |
+	
+						a = arr[y2 - 1].charAt(x2);
+						b = arr[y2].charAt(x2 - 1);
+						c = arr[y2].charAt(x2 + 1);
+						d = arr[y2 + 1].charAt(x2);
+						z = arr[y2].charAt(x2);
+						
+						border = {};
 						border['top'] = arr[y1].substring(x1 + 1, x2);
 						border['bottom'] = arr[y2].substring(x1 + 1, x2);
 						//console.log('{'+border['bottom']+'}',  !border['bottom'].match(/^[-+=:; ]+$/) );
@@ -1434,288 +1418,373 @@ console.log('underline:', underline, 'overline:', overline);
 							border['left'] += arr[y].substr(x1, 1);
 							border['right'] += arr[y].substr(x2, 1);
 						}
-		                
-		                if(z.match(/[ -]/)){
-		                	console.log('z: ', z);
-		                }
-		                
-		                if(debug){console.log([x1, y1], [x2, y2], colspan);}
-		                
-		                
-		            }
-
-
-		            // Use this syntax to combine A and E with rowspan:
-		            // "#" is a placeholder for either one of the characters [-=: X] (including space(" ") and edges ("X")).
-		            // "_" is a placeholder for a space (" ").
-		            // The first table is standard grid style. The second table is "lazy" grid style.
-		            // If any character other than one of the characters [-=:; X] (as above) gets
-		            // anywhere in the way of the supposed line (In this case "J"), A and E get automatically
-		            // combined (see examples three and four).
-		            //
-		            // +---+---+---+  |  +   +   +   +  |  +---+---+---+  |  +   +   +   +
-		            // | A | B | C |  |    A   B | C    |  | A | B | C |  |    A   B   C  
-		            // +---+  _+#--+  |  +   +  _+#  +  |  +---+ J +---+  |  +   + J +   +
-		            // | D | E | F |  |    D   E | F    |  | D | E | F |  |    D   E   F  
-		            // +---+---+---+  |  +   +   +   +  |  +---+---+---+  |  +   +   +   +
-		            // | G | H | I |  |    G   H   I    |  | G | H | I |  |    G   H   I  
-		            // +---+---+---+  |  +   +   +   +  |  +---+---+---+  |  +   +   +   +
-		            //
-		            // The same applies for combining the cells D and E horizontally, with rowspan:
-		            // Of course "#" now stands for [|=:; X], with "|" instead of "-". 
-		            //
-		            // +---+---+---+  |  +   +   +   +  |  +---+---+---+  |  +   +   +   +
-		            // | A | B | C |  |    A   B | C    |  | A | B | C |  |    A   B   C  
-		            // +---+---+---+  |  +   +   +   +  |  +---+---+---+  |  +   +   +   +
-		            // | D _ E | F |  |    D _ E | F    |  | D J E | F |  |    D J E   F  
-		            // +---+---+---+  |  +  -+-  +   +  |  +---+---+---+  |  +   +   +   +
-		            // | G # H | I |  |    G # H   I    |  | G | H | I |  |    G   H   I  
-		            // +---+---+---+  |  +   +   +   +  |  +---+---+---+  |  +   +   +   +
-		            //
-
-					
-
-		            if (
-		            z == '+'
-		            && a.match(/[ |=:;+]/)
-		            && b.match(/[ -=:;+]/)
-		            && !(
-		            	//  a    | 
-						// b+c  _+#
-						//  d    | 
-		            	a.match(/[|=:;]/)
-		            	&& b == ' ' && c.match(/[-=:; ]|$/)
-		            	&& d.match(/[|=:;]/)
-		            )
-		            &&
-		            border['bottom'].match(/^[-+=:; ]+$/) // see "J" in the example
-		            || endoflinebug
-		            ) {
-		                text = '';
-
-		                // text-align
-		                // ==========
-		                // The borders of the gridtable must consist of the
-		                // following characters: `-` for horizontal lines, `|` (for
-		                // vertical lines), `=` (for headers), `:` (for sticky alignment),
-		                // `;` (for single alignment) or space (for automatic lines).
-		                // 
-		                // horizontal alignment
-		                // --------------------
-		                // `;----` will align the cell below it *left*.
-		                // `----;` will align the cell below it *right*.
-		                // `;---;` will align the cell below it *justified*.
-		                // `--;--` will align the cell below it *centered*; the ';'
-		                // can be anywhere in the middle.
-		                // (`;--"."--`, `--"."--;`, `;--"."--;`, `--;"."--` or
-		                //  `.;----`, `-----;.`, `.;----;.`, `--;.;--` are planned
-		                // to align the cell below it *to the char* between the `"`s.)
-		                //
-		                // If you use `:` instead of `;`, all of the following cells in
-		                // the same *column* will be aligned until another single cell
-		                // alignment stops it again.
-		                // 
-		                // vertical alignment
-		                // --------------------
-		                // `;||||` will align the cell below it *left*.
-		                // `||||;` will align the cell below it *right*.
-		                // `;|||;` will align the cell below it *justified*.
-		                // `||;||` will align the cell below it *centered*; the ';'
-		                // can be anywhere in the middle.
-		                //
-		                // If you use `:` instead of `;`, all of the following cells in
-		                // the same *row* will be aligned until another single cell
-		                // alignment stops it again.
-		                //
-
-		                border['left'] = border['right'] = '';
-		                for (y = y1 + 1; y < y2; y++) {
-		                    text += arr[y].substring(x1 + 1, x2) + '\n';
-		                    border['left'] += arr[y].substr(x1, 1);
-		                    border['right'] += arr[y].substr(x2, 1);
-		                }
-		                //console.log(text);
-		                //console.log(border);
-		                l = border['top'].charAt(0);
-		                r = border['top'].charAt(border['top'].length - 1);
-		                t = border['left'].charAt(0);
-		                b = border['left'].charAt(border['left'].length - 1);
-
-		                h_align_srt = (l == ':' && r == ':' ? 'justify' : l == ':' ? 'left' : r == ':' ? 'right' : border['top'].match(/^[-=+ ]+[:]+[-=+ ]+$/) ? 'center' : 'default');
-		                h_align_end = (l == ';' && r == ';' ? 'justify' : l == ';' ? 'left' : r == ';' ? 'right' : border['top'].match(/^[-=+ ]+[;]+[-=+ ]+$/) ? 'center' : 'default');
-
-
-		                if (h_align_srt != 'default') {
-		                    h_align = h_align_srt;
-		                    h_align_all[ind] = h_align_srt;
-		                } else if (h_align_end != 'default') {
-		                    h_align = h_align_end;
-		                    h_align_all[ind] = 'default';
-		                } else {
-		                    h_align = h_align_all[ind] || 'default';
-		                }
-		                
-		                if(h_align == 'default' && default_h_align){
-		                	h_align = default_h_align;
-		                }
-
-		                v_align_srt = (t == ':' && b == ':' ? 'middle' : t == ':' ? 'top' : b == ':' ? 'bottom' : border['left'].match(/^[|=+ ]+[:]+[|=+ ]+$/) ? 'middle' : 'default');
-		                v_align_end = (t == ';' && b == ';' ? 'middle' : t == ';' ? 'top' : b == ';' ? 'bottom' : border['left'].match(/^[|=+ ]+[;]+[|=+ ]+$/) ? 'middle' : 'default');
-
-		                if (v_align_srt != 'default') {
-		                    v_align = v_align_srt;
-		                    v_align_all[i] = v_align_srt;
-		                } else if (v_align_end != 'default') {
-		                    v_align = v_align_end;
-		                    v_align_all[i] = 'default';
-		                } else {
-		                    v_align = v_align_all[i] || 'default';
-		                }
-		                
-		                if(v_align == 'default' && default_v_align){
-		                	v_align = default_v_align;
-		                }
-
-		                header = border['bottom'].indexOf('=') > -1 || border['right'].indexOf('=') > -1;
-		                
-		                //console.log(rows, rows.length-rows.indexOf(y1));
-		                rowspan = rows.length - rows.indexOf(y1);
-
-		                html = (header ? '<th' : '<td');
-		                html += (markdown == "1" ? ' markdown="1"' : '');
-		                if (html5) {
-		                    if (h_align != 'default' | v_align != 'default') {
-		                        html += ' style="'
-		                        html += (h_align == 'default' ? '' : 'text-align:' + h_align + ';');
-		                        html += (v_align == 'default' ? '' : 'vertical-align:' + v_align + ';');
-		                        html += '"';
-		                    }
-		                } else {
-		                    html += (h_align == 'default' ? '' : ' align="' + h_align + '"');
-		                    html += (v_align == 'default' ? '' : ' valign="' + v_align + '"');
-		                }
-		                html += (colspan > 1 ? ' colspan="' + colspan + '"' : '');
-		                html += (rowspan > 1 ? ' rowspan="' + rowspan + '"' : '');
-		                html += '>';
-		                text = text.replace(/[ ]*$/gm, ''); // otherwise "  " would trigger <br/>
-		                block = _RunBlockGamut( text );
-		                // if the block only consists of the first paragraph
-		                if( (block.match(/^<p>[\s\S]*?<\/p>/) || [''])[0].length == block.length){
-		                	// strip away the <p>
-		                	block = block.replace(/^<p>|<\/p>$/g, '');
-		                }
-						html += block;
-		                html += (header ? '</th>' : '</td>');
-						if(debug){console.log(html);}
-
-		                table[y1] = table[y1] || [];
-		                table[y1][x1] = html;
-		                
+						
+						colspan = 1;
+						
+						// horizontal traverse
+						while (z.match(/[ -]/) || (
+						//  a    _ 
+						// bzc  -+-
+						//  d    # 
+						a == ' '
+						&& b.match(/[-=:;]/) && c.match(/[-=:;]/)
+						&& d.match(/[|=:; ]|$/)
+						)
+						|| !border['right'].match(/^[|+=:; ]+$/) // see "J" in the example
+						) {
+							if (a == ' ' && b.match(/[-=:;]/) && c.match(/[-=:;]/) && d.match(/[|=:; ]|$/)
+							|| !border['right'].match(/^[|+=:; ]+$/)
+							) {
+								indices[x2] = i;
+								console.warn(a + '\n' + b + z + c + '\n' + d);
+							}
+							colspan++;
+							
+							x2 = indices.regexIndexOf(/\d/, x2 + 1) * 1;
+							
+							if (x2 < 0 || arr[y2].charAt(x2 + 1) == '') {
+								if(debug){console.error('end of columns in hor traverse!');}
+								rows[rows.length] = i;
+								endoflinebug = true;
+								break;
+							}
+												
+							a = arr[y2 - 1].charAt(x2);
+							b = arr[y2].charAt(x2 - 1);
+							c = arr[y2].charAt(x2 + 1);
+							d = arr[y2 + 1].charAt(x2);
+							z = arr[y2].charAt(x2);
+							
+							border['top'] = arr[y1].substring(x1 + 1, x2);
+							border['bottom'] = arr[y2].substring(x1 + 1, x2);
+							//console.log('{'+border['bottom']+'}',  !border['bottom'].match(/^[-+=:; ]+$/) );
+						
+							border['left'] = border['right'] = '';
+							for (y = y1 + 1; y < y2; y++) {
+								text += arr[y].substring(x1 + 1, x2) + '\n';
+								border['left'] += arr[y].substr(x1, 1);
+								border['right'] += arr[y].substr(x2, 1);
+							}
+							
+							if(z.match(/[ -]/)){
+								console.log('z: ', z);
+							}
+							
+							if(debug){console.log([x1, y1], [x2, y2], colspan);}
+							
+							
+						}
+	
+	
+						// Use this syntax to combine A and E with rowspan:
+						// "#" is a placeholder for either one of the characters [-=: X] (including space(" ") and edges ("X")).
+						// "_" is a placeholder for a space (" ").
+						// The first table is standard grid style. The second table is "lazy" grid style.
+						// If any character other than one of the characters [-=:; X] (as above) gets
+						// anywhere in the way of the supposed line (In this case "J"), A and E get automatically
+						// combined (see examples three and four).
+						//
+						// +---+---+---+  |  +   +   +   +  |  +---+---+---+  |  +   +   +   +
+						// | A | B | C |  |    A   B | C    |  | A | B | C |  |    A   B   C  
+						// +---+  _+#--+  |  +   +  _+#  +  |  +---+ J +---+  |  +   + J +   +
+						// | D | E | F |  |    D   E | F    |  | D | E | F |  |    D   E   F  
+						// +---+---+---+  |  +   +   +   +  |  +---+---+---+  |  +   +   +   +
+						// | G | H | I |  |    G   H   I    |  | G | H | I |  |    G   H   I  
+						// +---+---+---+  |  +   +   +   +  |  +---+---+---+  |  +   +   +   +
+						//
+						// The same applies for combining the cells D and E horizontally, with rowspan:
+						// Of course "#" now stands for [|=:; X], with "|" instead of "-". 
+						//
+						// +---+---+---+  |  +   +   +   +  |  +---+---+---+  |  +   +   +   +
+						// | A | B | C |  |    A   B | C    |  | A | B | C |  |    A   B   C  
+						// +---+---+---+  |  +   +   +   +  |  +---+---+---+  |  +   +   +   +
+						// | D _ E | F |  |    D _ E | F    |  | D J E | F |  |    D J E   F  
+						// +---+---+---+  |  +  -+-  +   +  |  +---+---+---+  |  +   +   +   +
+						// | G # H | I |  |    G # H   I    |  | G | H | I |  |    G   H   I  
+						// +---+---+---+  |  +   +   +   +  |  +---+---+---+  |  +   +   +   +
+						//
+	
+						
+	
+						if (
+						z == '+'
+						&& a.match(/[ |=:;+]/)
+						&& b.match(/[ -=:;+]/)
+						&& !(
+							//  a    | 
+							// b+c  _+#
+							//  d    | 
+							a.match(/[|=:;]/)
+							&& b == ' ' && c.match(/[-=:; ]|$/)
+							&& d.match(/[|=:;]/)
+						)
+						&&
+						border['bottom'].match(/^[-+=:; ]+$/) // see "J" in the example
+						|| endoflinebug
+						) {
+							text = '';
+	
+							// text-align
+							// ==========
+							// The borders of the gridtable must consist of the
+							// following characters: `-` for horizontal lines, `|` (for
+							// vertical lines), `=` (for headers), `:` (for sticky alignment),
+							// `;` (for single alignment) or space (for automatic lines).
+							// 
+							// horizontal alignment
+							// --------------------
+							// `;----` will align the cell below it *left*.
+							// `----;` will align the cell below it *right*.
+							// `;---;` will align the cell below it *justified*.
+							// `--;--` will align the cell below it *centered*; the ';'
+							// can be anywhere in the middle.
+							// (`;--"."--`, `--"."--;`, `;--"."--;`, `--;"."--` or
+							//  `.;----`, `-----;.`, `.;----;.`, `--;.;--` are planned
+							// to align the cell below it *to the char* between the `"`s.)
+							//
+							// If you use `:` instead of `;`, all of the following cells in
+							// the same *column* will be aligned until another single cell
+							// alignment stops it again.
+							// 
+							// vertical alignment
+							// --------------------
+							// `;||||` will align the cell below it *left*.
+							// `||||;` will align the cell below it *right*.
+							// `;|||;` will align the cell below it *justified*.
+							// `||;||` will align the cell below it *centered*; the ';'
+							// can be anywhere in the middle.
+							//
+							// If you use `:` instead of `;`, all of the following cells in
+							// the same *row* will be aligned until another single cell
+							// alignment stops it again.
+							//
+	
+							border['left'] = border['right'] = '';
+							for (y = y1 + 1; y < y2; y++) {
+								text += arr[y].substring(x1 + 1, x2) + '\n';
+								border['left'] += arr[y].substr(x1, 1);
+								border['right'] += arr[y].substr(x2, 1);
+							}
+							//console.log(text);
+							//console.log(border);
+							l = border['top'].charAt(0);
+							r = border['top'].charAt(border['top'].length - 1);
+							t = border['left'].charAt(0);
+							b = border['left'].charAt(border['left'].length - 1);
+	
+							h_align_srt = (l == ':' && r == ':' ? 'justify' : l == ':' ? 'left' : r == ':' ? 'right' : border['top'].match(/^[-=+ ]+[:]+[-=+ ]+$/) ? 'center' : 'default');
+							h_align_end = (l == ';' && r == ';' ? 'justify' : l == ';' ? 'left' : r == ';' ? 'right' : border['top'].match(/^[-=+ ]+[;]+[-=+ ]+$/) ? 'center' : 'default');
+	
+	
+							if (h_align_srt != 'default') {
+								h_align = h_align_srt;
+								h_align_all[ind] = h_align_srt;
+							} else if (h_align_end != 'default') {
+								h_align = h_align_end;
+								h_align_all[ind] = 'default';
+							} else {
+								h_align = h_align_all[ind] || 'default';
+							}
+							
+							if(h_align == 'default' && default_h_align){
+								h_align = default_h_align;
+							}
+	
+							v_align_srt = (t == ':' && b == ':' ? 'middle' : t == ':' ? 'top' : b == ':' ? 'bottom' : border['left'].match(/^[|=+ ]+[:]+[|=+ ]+$/) ? 'middle' : 'default');
+							v_align_end = (t == ';' && b == ';' ? 'middle' : t == ';' ? 'top' : b == ';' ? 'bottom' : border['left'].match(/^[|=+ ]+[;]+[|=+ ]+$/) ? 'middle' : 'default');
+	
+							if (v_align_srt != 'default') {
+								v_align = v_align_srt;
+								v_align_all[i] = v_align_srt;
+							} else if (v_align_end != 'default') {
+								v_align = v_align_end;
+								v_align_all[i] = 'default';
+							} else {
+								v_align = v_align_all[i] || 'default';
+							}
+							
+							if(v_align == 'default' && default_v_align){
+								v_align = default_v_align;
+							}
+	
+							header = border['bottom'].indexOf('=') > -1 || border['right'].indexOf('=') > -1;
+							
+							//console.log(rows, rows.length-rows.indexOf(y1));
+							rowspan = rows.length - rows.indexOf(y1);
+	
+							html = (header ? '<th' : '<td');
+							html += (markdown == "1" ? ' markdown="1"' : '');
+							if (html5) {
+								if (h_align != 'default' | v_align != 'default') {
+									html += ' style="'
+									html += (h_align == 'default' ? '' : 'text-align:' + h_align + ';');
+									html += (v_align == 'default' ? '' : 'vertical-align:' + v_align + ';');
+									html += '"';
+								}
+							} else {
+								html += (h_align == 'default' ? '' : ' align="' + h_align + '"');
+								html += (v_align == 'default' ? '' : ' valign="' + v_align + '"');
+							}
+							html += (colspan > 1 ? ' colspan="' + colspan + '"' : '');
+							html += (rowspan > 1 ? ' rowspan="' + rowspan + '"' : '');
+							html += '>';
+							text = text.replace(/[ ]*$/gm, ''); // otherwise "  " would trigger <br/>
+							block = _RunBlockGamut( text );
+							// if the block only consists of the first paragraph
+							if( (block.match(/^<p>[\s\S]*?<\/p>/) || [''])[0].length == block.length){
+								// strip away the <p>
+								block = block.replace(/^<p>|<\/p>$/g, '');
+							}
+							html += block;
+							html += (header ? '</th>' : '</td>');
+							if(debug){console.log(html);}
+	
+							table[y1] = table[y1] || [];
+							table[y1][x1] = html;
+							
+							while (indices.length < ind) {
+								indices.push('_');
+							}
+							indices[ind] = i;
+							//indices_change = true;
+						} else if(debug){
+							console.error('');
+							if (!border['bottom'].match(/^[-+=:; ]+$/)) {
+								blanks = '';
+								while (blanks.length < border['bottom'].length) {
+									blanks += ' ';
+								}
+								console.log(blanks + a + ' \n' + border['bottom'] + z + c + '\n' + blanks + d + ' ');
+							} else {
+								console.log(' ' + a + ' \n' + b + z + c + '\n ' + d + ' ');
+							}
+						}
+					}
+	
+					if (/*i > 1 || */typeof indices[ind] == 'undefined') {
+						if(debug){console.log('initializing');}
 						while (indices.length < ind) {
 							indices.push('_');
 						}
 						indices[ind] = i;
 						//indices_change = true;
-		            } else if(debug){
-		                console.error('');
-		                if (!border['bottom'].match(/^[-+=:; ]+$/)) {
-		                    blanks = '';
-		                    while (blanks.length < border['bottom'].length) {
-		                        blanks += ' ';
-		                    }
-		                    console.log(blanks + a + ' \n' + border['bottom'] + z + c + '\n' + blanks + d + ' ');
-		                } else {
-		                    console.log(' ' + a + ' \n' + b + z + c + '\n ' + d + ' ');
-		                }
-		            }
-		        }
-
-		        if (/*i > 1 || */typeof indices[ind] == 'undefined') {
-		        	if(debug){console.log('initializing');}
-		            while (indices.length < ind) {
-		                indices.push('_');
-		            }
-		            indices[ind] = i;
-		            //indices_change = true;
-		            if(debug){console.log(indices);}
-		        }
-
-		        r = (x2 < 0 ? ind + 1 : x2);
-		        if(debug){console.log('ind:' + ind, 'x2:' + (x2 < 0 ? ind + 1 : x2));}
-		    }
-		}
-
-		output = '<table>\n';
-		output += ( ($1 || $4) ? '<caption>' + _RunSpanGamut($1 || $4) + '</caption>\n' : '');
-		
-		rownum = 0;
-		colnum = 0;
-		thead = 1;
-		// <col width="8%" />
-		columns = 80;
-		prevind = 0;
-		total = indices.length;
-		divisor = ( total > columns ? total : columns );
-		for (x = 0; x < total; x++) {
-			if (indices[x] != '_' && x > 0) {
-				output += '<col width="'+ Math.round( (x-prevind)*100/divisor ) +'%" />\n';
-				
-				prevind = x;
+						if(debug){console.log(indices);}
+					}
+	
+					r = (x2 < 0 ? ind + 1 : x2);
+					if(debug){console.log('ind:' + ind, 'x2:' + (x2 < 0 ? ind + 1 : x2));}
+				}
 			}
+	
+			output = '<table>\n';
+			output += ( (captionabove || captionbelow) ? '<caption>' + _RunSpanGamut(captionabove || captionbelow) + '</caption>\n' : '');
+			
+			rownum = 0;
+			colnum = 0;
+			thead = 1;
+			// <col width="8%" />
+			columns = 80;
+			prevind = 0;
+			total = indices.length;
+			divisor = ( total > columns ? total : columns );
+			for (x = 0; x < total; x++) {
+				if (indices[x] != '_' && x > 0) {
+					output += '<col width="'+ Math.round( (x-prevind)*100/divisor ) +'%" />\n';
+					
+					prevind = x;
+				}
+			}
+			for (y = 0; y < table.length; y++) {
+				if (typeof table[y] != 'undefined') {
+					row = '';
+	
+					
+					for (x = 0; x < table[y].length; x++) {
+						if (typeof table[y][x] != 'undefined') {
+							row += table[y][x] + '\n';
+							if (thead == 1 && table[y][x].substr(0, 3) != '<th') {
+								thead = 4;
+							} else if (thead == 2 && table[y][x].substr(0, 3) != '<th') {
+								thead = 3;
+							}
+							colnum++;
+						}
+					}
+					rownum++;
+					
+					if(thead>=3){
+						row = '<tr class="' + (rownum % 2 == 0 ? 'odd' : 'even') + '">\n' + row;
+					}
+					else{
+						row = '<tr>\n' + row;
+					}
+					
+					
+					if (thead == 1) {
+						row = '<thead>\n' + row;
+						thead = 2;
+					} else if (thead == 3) {
+						row = '</thead>\n<tbody>\n' + row;
+						thead = 5;
+						rownum = 0; // reset the rownumbering for the tbody
+					} else if (thead == 4) {
+						row = '<tbody>\n' + row;
+						thead = 5;
+					}
+					row += '</tr>\n';
+					output += row;
+				}
+			}
+			
+			if (thead==2){
+				output += '</thead>\n<tbody>\n</tbody>\n';
+			} else if(thead==5){
+				output += '</tbody>\n';
+			}
+			output += '</table>';
+			output += (captionabove ? '\n' + spitoutbelow : ''); // spit out the superfluous second table caption
+			console.log(output);
+			
+			return _HashBlock( output ) + "\n";
 		}
-		for (y = 0; y < table.length; y++) {
-		    if (typeof table[y] != 'undefined') {
-		        row = '';
-
-		        
-		        for (x = 0; x < table[y].length; x++) {
-		            if (typeof table[y][x] != 'undefined') {
-		                row += table[y][x] + '\n';
-		                if (thead == 1 && table[y][x].substr(0, 3) != '<th') {
-		                    thead = 4;
-		                } else if (thead == 2 && table[y][x].substr(0, 3) != '<th') {
-		                    thead = 3;
-		                }
-		                colnum++;
-		            }
-		        }
-		        rownum++;
-		        
-		        if(thead>=3){
-			        row = '<tr class="' + (rownum % 2 == 0 ? 'odd' : 'even') + '">\n' + row;
-		        }
-		        else{
-		        	row = '<tr>\n' + row;
-		        }
-		        
-		        
-		        if (thead == 1) {
-		            row = '<thead>\n' + row;
-		            thead = 2;
-		        } else if (thead == 3) {
-		            row = '</thead>\n<tbody>\n' + row;
-		            thead = 5;
-		            rownum = 0; // reset the rownumbering for the tbody
-		        } else if (thead == 4) {
-		            row = '<tbody>\n' + row;
-		            thead = 5;
-		        }
-		        row += '</tr>\n';
-		        output += row;
-		    }
+		else {
+			var two_dim_arr = [];
+			var arr = table.split(/[+](?:[-=]+[+])+[ ]*\n/);
+			var first_row = table.substring(1,table.indexOf('\n')-1).split('+');
+			var first_row_length = first_row.length;
+			var first_is_header = table.match(/\n[+]([-=])/)[1] == '=' ? 1 : 0;
+			console.log(first_is_header);
+			arr.shift();
+			arr.pop();
+			var cols = [];
+			console.log(arr.length);
+			var arr_length = arr.length;
+			for(var row = 0; row<arr_length;row++){
+				two_dim_arr[row] = [];
+				var lines = arr[row].split(/^/m);
+				var lines_length = lines.length;
+				console.log(lines);
+				var position = 1;
+				var last = first_row.length-1;
+				for(var slice = 0; slice < first_row_length; slice++){
+					if(cols.length<=slice){cols[slice] = first_row[slice].length+1;}
+					srt = position;
+					end = (slice==last ? undefined : position += first_row[slice].length+1);
+					cell = '';
+					
+					for(var num = 0; num < lines_length; num++){
+						console.log(num, lines[num]);
+						cell += lines[num].substring(srt, end).replace(/[|]?[ \n]*$/, '')+'\n';
+					}
+					console.info('',row, slice)
+					console.log(cell);
+					two_dim_arr[row][slice] = {text:cell, h_align:'left', v_align:'default'};
+				}
+			}
+			console.log(two_dim_arr, [first_is_header, arr.length-first_is_header, 0], 'some table', cols);
+			return _printTable( two_dim_arr, [first_is_header, arr.length-first_is_header, 0], 'some table' , cols);
 		}
-		
-		if (thead==2){
-			output += '</thead>\n<tbody>\n</tbody>\n';
-		} else if(thead==5){
-			output += '</tbody>\n';
-		}
-		output += '</table>';
-		output += ($1 ? '\n' + $3 : ''); // spit out the superfluous second table caption
-		console.log(output);
-        
-        return _HashBlock( output ) + "\n";
-    }   
+	}   
      
     
     var md_flag_DoLists_z = "8ac2ec5b90470262b84a9786e56ff2bf";
