@@ -84,8 +84,8 @@ function Pandoc(text, options = {}) {
 		};
 	}
 	
-	headers_in_use = [];
-	html_to_text = false;
+	var headers_in_use = [];  // For automatic header ids
+	var html_to_text = false; // This will be a DOM element to put in html and get out raw text
 	
     /* Utilities */
     function Array_pad(target, size, value) {
@@ -425,11 +425,21 @@ function Pandoc(text, options = {}) {
     + ')'
     );
     function _HashHTMLBlocks_InHTML( text, hash_function, md_attr ) {
+
         if( text === '' ) return new Array( '', '' );
         
         var markdown_attr_match = new RegExp(
           '\\s*'
         + 'markdown'
+        + '\\s*=\\s*'
+        + '(["\'])'
+        + '(.*?)'
+        + '\\1'
+        );
+
+        var options_attr_match = new RegExp(
+          '\\s*'
+        + 'options'
         + '\\s*=\\s*'
         + '(["\'])'
         + '(.*?)'
@@ -445,7 +455,6 @@ function Pandoc(text, options = {}) {
         var base_tag_name = "";
         var matches = text.match( /^<([\w:$]*)\b/ );
         if( matches != null ) base_tag_name = matches[1];
-        
         do {
             var r = text.match( md_reg_HashHTMLBlocks );
             
@@ -469,6 +478,20 @@ function Pandoc(text, options = {}) {
                     if( tag.charAt( 1 ) == '/' ) depth--;
                     else if( tag.charAt( tag.length - 2 ) != '/' ) depth++;
                 }
+                
+                if(options_matches){
+					var options_matches = tag.match( options_attr_match );
+					var all_options = options_matches[2].split(',');
+					var all_options_length = all_options.length;
+					var local_options = {};
+					for(var o = 0; o < all_options_length; o++){
+						[label, value] = all_options[o].split(':');
+						local_options[label] = value;
+						console.info('local_options (not yet implemented):', local_options);
+						// This should set the options for the containing block
+						// e.g. gridtables `true`, whereas it is set to `false` outside of the block
+					}
+				}
                 
                 var attr_matches = tag.match( markdown_attr_match );
                 if ( md_attr && attr_matches != null
