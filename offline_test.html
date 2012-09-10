@@ -17,8 +17,10 @@ Syntax Cheatsheet
 ========================================
 PHRASE EMPHASIS
 ---------------
-*emphasis4*   **strong2**   inword*emphasis4*  *emphasis4*inword  in*middle4*emphasis  \
-_emphasis3_   __strong1__   ending_snake_     _starting_snake   snake_case_test   
+*emphasis*, *emphasis*start, , is*emphasis*inmiddle, end*emphasis* \
+**strong**, **strong**start, is**strong**inmiddle, ends**strong** \
+_emphasis_, _snake_start, is_snake_case, ending_snake_ \
+__strong__, __double__snake, is__double__snake, endsnake__double__
 
 \ asdf
 
@@ -1057,6 +1059,14 @@ Command line usage
 
 http://javascript.cs.lmu.edu/notes/commandlinejs/
 
+
+Local options
+-------------
+
+There should be a way to set the options (like markdown extra, pandoc, etc.) for certain blocks only.
+That is, a html block should get a `options=" "` attribute where you set e.g. `options="html5:false"`,
+if you don't want stuff inside of it use html5 features.
+
     </pre>
   </div>
 
@@ -1078,7 +1088,7 @@ http://javascript.cs.lmu.edu/notes/commandlinejs/
             .replace(/>/g, '&gt;') + '</pre>');
         document.write('<hr/>');
         */
-        document.write(Pandoc(mdtext, {html5:true}));
+        document.write(Pandoc(mdtext, {debug:false}));
       </script>
     </div>
   </div>

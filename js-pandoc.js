@@ -63,6 +63,8 @@ default_options = {
 };
  
 function Pandoc(text, options = {}) {
+	console.clear();
+
 	console.group('options');
 	console.warn(options);
 	for(opt in default_options){
@@ -479,18 +481,28 @@ function Pandoc(text, options = {}) {
                     else if( tag.charAt( tag.length - 2 ) != '/' ) depth++;
                 }
                 
+				var options_matches = tag.match( options_attr_match );
                 if(options_matches){
-					var options_matches = tag.match( options_attr_match );
+
+
 					var all_options = options_matches[2].split(',');
 					var all_options_length = all_options.length;
 					var local_options = {};
+					var global_options = {};
 					for(var o = 0; o < all_options_length; o++){
 						[label, value] = all_options[o].split(':');
-						local_options[label] = value;
-						console.info('local_options (not yet implemented):', local_options);
-						// This should set the options for the containing block
-						// e.g. gridtables `true`, whereas it is set to `false` outside of the block
+						if(default_options[label]){
+							local_options[label] = (value=='true' ? true : value);
+							global_options[label] = window[label];
+							// This should set the options for the containing block
+							// e.g. gridtables `true`, whereas it is set to `false` outside of the block
+							window[label] = value;
+						}
+						else{
+							console.error('no such option label:', label);
+						}
 					}
+					console.info('local_options:', local_options);
 				}
                 
                 var attr_matches = tag.match( markdown_attr_match );
@@ -535,6 +547,13 @@ function Pandoc(text, options = {}) {
         while( depth > 0 );
         
         parsed += hash_function( block_text );
+        
+        // resetting for global
+        for(opt in global_options){
+        	window[opt] = global_options[opt];
+        }
+        console.info('global_options:', global_options);
+        console.log(parsed, '_', text);
         
         return new Array( parsed, text );
     }
@@ -2187,18 +2206,29 @@ function int2roman(number) {
      
     
     var md_reg_DoItalicsAndBold_1 = new RegExp(
-          '(((?!\\w)([\\s\\S]))?__)'
+    	(
+    	pandoc || strict ?
+          '(((?!__)([\\s\\S]{2}))?__)'
         + '(?=\\S)'
         + '(?!__)'
         + '('
         + 	'('
         +		'[^_]+?'
         +		'|'
-        +		'(?![a-zA-Z0-9])[\\s\\S]?_(?=\\S)(?!_)[\\s\\S]+?(?=\\S)[\\s\\S]_(?![a-zA-Z0-9])'
+        +		'_(?=\\S)(?!_)([\\s\\S]+?)(?=\\S)[\\s\\S]_'
         +	')+?'
+        + '(?=\\S)\\S)'
+        + '__'
+        : // Markdown Extra
+          '(((?!\\w)([\\s\\S]))?__)'
+        + '(?=\\S)'
+        + '(?!__)'
+        + '('
+        + 	'[\\s\\S]+?'
         + ')'
         + '__'
         + '(?!\\w)'
+        )
         , "g" );
     var md_reg_DoItalicsAndBold_2 = new RegExp(
           '(((?!\\*\\*)([\\s\\S]{2}))?\\*\\*)'
@@ -2232,6 +2262,24 @@ function int2roman(number) {
         + ')'
         + '\\*'
         , "g" );
+    var md_reg_DoSuperscript = new RegExp(
+          '(((?!\\^)[\\s\\S]|^)\\^)'
+        + '(?=\\S)'
+        + '(?!\\^)'
+        + '('
+        + 	'([^\\\\](?![ ])|[\\\\][ ])+?'
+        + ')'
+        + '\\^'
+        , "g" );
+    var md_reg_DoSubscript = new RegExp(
+          '(((?!~)[\\s\\S]|^)~)'
+        + '(?=\\S)'
+        + '(?!~)'
+        + '('
+        + 	'([^\\\\](?![ ])|[\\\\][ ])+?'
+        + ')'
+        + '~'
+        , "g" );
     
     var md_reg_DoItalicsAndBold_5 = /(?:___|\*\*\*)([\s\S]+?)(?:___|\*\*\*)/g;
     var md_reg_DoStrikethrough = /~~([\s\S]+?)~~/g;
@@ -2245,13 +2293,19 @@ function int2roman(number) {
         
         var reg = md_reg_DoItalicsAndBold_2;
         text = text.replace( reg, (debug ? "$3<strong>$4<!-- 2 --></strong>" : "$3<strong>$4</strong>") );
-        
+
         var reg = md_reg_DoItalicsAndBold_3;
         text = text.replace( reg, (debug ? "$2<em>$3<!-- 3 --></em>" : "$2<em>$3</em>") );
         
         var reg = md_reg_DoItalicsAndBold_4;
         text = text.replace( reg, (debug ? "$2<em>$3<!-- 4 --></em>" : "$2<em>$3</em>") );
 
+        var reg = md_reg_DoSuperscript;        
+        text = text.replace( reg, "$2<sup>$3</sup>" );
+        
+        var reg = md_reg_DoSubscript;
+        text = text.replace( reg, "$2<sub>$3</sub>" );
+                
 		if(pandoc){
 			var reg = md_reg_DoStrikethrough;
 			text = text.replace( reg, "<del>$1</del>" );
