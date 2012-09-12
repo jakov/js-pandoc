@@ -827,19 +827,18 @@ function Pandoc(text, options = {}) {
     
     var md_reg_DoSetextHeaders = /(^.+?)(?:[ ]+\{#([-_:a-zA-Z0-9]+)\})?[ \t]*\n([-]+|[=]+)[ \t]*\n+/gm;
     var md_reg_DoAtxHeaders = new RegExp(
-      '^'
-    + (Pandoc && !strict ? '\n' : '') // Pandoc requires a blank line before a header
+      (Pandoc && !strict ? '^\\n' : '^') // Pandoc requires a blank line before a header
     + (pandoc ? ( strict ? '(#{1,6})(?![.])' : '(#+(?![.])[=+-]*)'): (strict ? '(#{1,6})' : '(#+[=+-]*)') ) // do not include pandoc "#." 
     + '[ \\t]*'
     + '(.+?)'
     + '[ \\t]*'
     + '#*'
     + '(?:[ ]+\\{#([-_:a-zA-Z0-9]+)\\}[ ]*)?'
-    + '\\n+'
-    , "gm" );
+    + (Pandoc && !strict ? '\\n' : '\\n+')
+    , (Pandoc && !strict ? 'gm' : 'gm') );
     function _DoHeaders( text ) {
         var reg = md_reg_DoSetextHeaders;
-        text = text.replace( reg, function( $0, $1, $2, $3 ) {
+        text = (Pandoc && !strict ? '\n' : '')+text.replace( reg, function( $0, $1, $2, $3 ) {
         			var hx = ($3.charAt(0)=='=' ? "h1" : "h2");
                     var str = '<'+hx;
 					var header_text = _RunSpanGamut( _UnslashQuotes( $1 ) );
@@ -1909,8 +1908,8 @@ function int2roman(number) {
         	: '#[.]|\\d+[.]|[(]?\\d+[)]|[(]?\\d+[.][)]|'
 				+ '[(]?[A-z]+[)][ ]*|[(]?[A-z]+[.:][)][ ]*|[A-Z]+[.:][ ][ ]*|[a-z]+[.:][ ]*|'
 				+ '[(]?[IVXLCDMivxlcdm]+[)][ ]*|[(]?[IVXLCDMivxlcdm]+[.:][)][ ]*|[IVXLCDM]+[.:][ ][ ]*|[ivxlcdm]+[.:][ ]*')
-        : (strict ? ''
-        	: '')
+        : (strict ? '\\d+[.]'
+        	: '\\d+[.]')
         );
         var md_markers = new Array( md_marker_ul, md_marker_ol );
 
@@ -1918,7 +1917,7 @@ function int2roman(number) {
             var marker = md_markers[i];
             
             if ( md_list_level )
-                var prefix = '(^)';
+                var prefix = (pandoc ? '(\\n)':'(^)');
             else
                 var prefix = '(?:(\\n\\n)|^\\n?)';
             
@@ -1942,7 +1941,7 @@ function int2roman(number) {
             + 			')'
             + 	')'
             + ')'
-            , "gm" );
+            , (pandoc ? 'g':'gm') );
             
             text = text.replace( reg, function( $0, $1, $2, $3, $4 ) {
                 $2 = $2.replace( md_flag_DoLists_z, "" );
@@ -2134,7 +2133,7 @@ function int2roman(number) {
     + '('
         + '(?:'
             + '(?:[ ]{' + md_tab_width + '}|\\t)'
-            + '.*\\n+'
+            + (pandoc ? '.*\\n+':'.*\\n+')
         + ')+'
     + ')'
     + '((?=^[ ]{0,' + md_tab_width + '}\\S)|' + md_flag_DoCodeBlocks_Z + ')'
@@ -2320,13 +2319,14 @@ function int2roman(number) {
     
     var md_reg_DoBlockQuotes = new RegExp(
       '('
-    + (pandoc && !strict ? '\n\n' : '') // require a blank line before a block quote
+    +   (pandoc && !strict ? '.*\\n' : '') // match the line before the blockquote, a quasi "lookbehind"
     +	'('
     +       '[ \\t]*>[ \\t]?'
-    +			'.+\\n'
-    +		'(.+\\n)*'
-    +		'\\n*'
-    +	')+'
+	+		'.+\\n'
+	+		'(.+\\n)*'
+	+		(pandoc && !strict ? '' : '\\n*')
+    +	')'
+    + (pandoc && !strict ? '' : '+')
     + ')'
     , "gm" );
     
@@ -2341,6 +2341,10 @@ function int2roman(number) {
     var md_reg_DoBlockQuotes_callback_3 = /^/gm;
     var md_reg_DoBlockQuotes_callback_4 = /(\s*<pre>.+?<\/pre>)/;
     function _DoBlockQuotes_callback( $0, $1 ) {
+    	if(pandoc && !strict && !$0.match(/^\n*[>]/)){
+    		console.error('Pandoc doesn´t like blockquote inside a paragraph!');
+    		return $0;
+    	}
         var bq = $1;
         bq = bq.replace( md_reg_DoBlockQuotes_callback_1, '' );
         bq = bq.replace( md_reg_DoBlockQuotes_callback_2, '' );
