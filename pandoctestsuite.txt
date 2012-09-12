@@ -372,8 +372,6 @@ Interpreted markdown in a table:
 </tr>
 </table>
 
-<script type="text/javascript">document.write('This *should not* be interpreted as markdown');</script>
-
 Here's a simple block:
 
 <div>

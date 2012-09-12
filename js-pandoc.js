@@ -1830,10 +1830,8 @@ console.log('underline:', underline, 'overline:', overline);
      
     
     var md_flag_DoLists_z = "8ac2ec5b90470262b84a9786e56ff2bf";
-    
-	//jakov
 
-function linum2int(inp) { //jakob
+function linum2int(inp) {
 	var inp = inp.replace(/\W/, '');
 	var out = 0;
 	for (var i = 0; i < inp.length; i++) {
@@ -1859,7 +1857,7 @@ function int2linum(input) { //jakob
 	});
 }
 
-function roman2int(input) { //jakob
+function roman2int(input) {
 
 	romans = {
 		'm': 1000,
@@ -1895,8 +1893,6 @@ function int2roman(number) {
 	}
 	return result;
 }
-
-	//endjakov
 
     function _DoLists( text ) {
         var md_marker_ul = '[*+-]';
@@ -1948,10 +1944,11 @@ function int2roman(number) {
                 var list = $2;
                 var list_type = $4.match( new RegExp( md_marker_ul ) ) != null ? "ul" : "ol";
 				if(list_type=="ol"){
+					var letter = $4.replace(/\W/g, '');
 					// not i v x : [A-HJ-UWY-Za-hj-uwy-z]
 					
 					// i. v. x. l: c: d: m: mm. ivxlcdm.					
-					if($4.match( /^[ivx][^:](?![ ]{2})|^[lcdm](?:[:]|[^:][ ]{2})|^[ivxlcdm]{2,}[^:](?![ ]{2})/i) ){var params = ' type="'+($4.replace(/\W/g, '').toLowerCase()==$4 ? 'i':'I')+'" start="'+roman2int($4)+'"';}
+					if($4.match( /^[ivx][^:](?![ ]{2})|^[lcdm](?:[:]|[^:][ ]{2})|^[ivxlcdm]{2,}[^:](?![ ]{2})/i) ){var params = ' type="'+(letter.toLowerCase()==letter ? 'i':'I')+'" start="'+roman2int(letter)+'"';}
 					// // test for matching:
 					// var abc = "abcdefghijklmnopqrstuvwxyz";
 					// for(i=0;i<26;i++){
@@ -1966,7 +1963,7 @@ function int2roman(number) {
 					// }
 
 					// a. i: v: x: aa. mm:
-					else if($4.match( /^[a-z]+/i) ){var params = ' type="'+($4.toLowerCase()==$4 ? 'a':'A')+'" start="'+linum2int($4.replace(/\W/gi, ''))+'"';}
+					else if($4.match( /^[a-z]+/i) ){var params = ' type="'+(letter.toLowerCase()==letter ? 'a':'A')+'" start="'+linum2int(letter)+'"';}
 
 					else {var params = ' start="'+$4.replace(/\W/g, '')+'"';}
 				} else {var params = '';}
@@ -2342,7 +2339,8 @@ function int2roman(number) {
     var md_reg_DoBlockQuotes_callback_4 = /(\s*<pre>.+?<\/pre>)/;
     function _DoBlockQuotes_callback( $0, $1 ) {
     	if(pandoc && !strict && !$0.match(/^\n*[>]/)){
-    		console.error('Pandoc doesn´t like blockquote inside a paragraph!');
+    		console.error('Pandoc doesn´t like blockquote inside a paragraph:');
+    		console.log($0);
     		return $0;
     	}
         var bq = $1;
