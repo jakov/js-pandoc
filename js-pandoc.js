@@ -578,6 +578,9 @@ function Pandoc(text, options = {}) {
     
     function _RunBlockGamut( text, hash_html_blocks ) {
         hash_html_blocks = ( hash_html_blocks == undefined );
+        if(pandoc){
+        	text = _DoSimpleTables( text );
+        }
         if ( hash_html_blocks ) {
             text = _HashHTMLBlocks( text );
         }
@@ -1268,6 +1271,7 @@ console.log('underline:', underline, 'overline:', overline);
         return _HashBlock( output ) + "\n";
         
     }
+    
     function _printTable( two_dim_arr, [theadsize, tbodysize, tfootsize], caption = '', cols = false){
     	var output = '<table>\n';
         output += ( caption ? '<caption>' + _RunSpanGamut( caption ) + '</caption>\n' : '');
@@ -1334,6 +1338,78 @@ console.log('underline:', underline, 'overline:', overline);
         return output;
     }
     
+    var md_flag_DoSimpleTables = "d0dd78840fdffb4bf1f8d9e65a42d778";
+    var md_reg_DoSimpleTables = new RegExp(
+      '^'
+    + '('
+    + 	'[ ]{0,' + md_less_than_tab + '}'
+    + 	'(?:Table[:]|[:])[\\S\\s]*?[^\\n]\\n'		// captionabove
+    + 	'\\n'
+    + ')?'
+    + '[ ]{0,' + md_less_than_tab + '}'								
+    + '([ ]*[-]+[ ]*\\n)?'							// ----------------
+    + '((?:[^\\n]*\\n\\n?)*)'								// header  header  header
+    + '([ ]*[-=]*[ ]+[-= ]*)\\n'					// ------- ------- -------
+    + '((?:[^\\n]*\\n\\n?)+?)'						// content content content
+    + '([- ]*[-][- ]*\\n)?'							// ------ ------ ----
+    + '('
+    + 	'[ ]{0,' + md_less_than_tab + '}'
+    + 	'\\n'
+    + 	'(?:Table[:]|[:])[\\S\\s]*?[^\\n]\\n'		// captionbelow
+    + ')?'
+    + '(?=\\n|' + md_flag_DoTables + ')'			//Stop at final double newline.
+    , "gm" );
+	function _DoSimpleTables( text ) {
+        
+        text += md_flag_DoSimpleTables;
+        var reg = md_reg_DoSimpleTables;
+        
+        text = text.replace( reg, function( $0, captionabove, lineabove, header, dashes, content, linebelow, captionbelow ) {
+			console.clear();
+			console.log('captionabove:', captionabove);
+			console.log('   lineabove:', lineabove);
+			console.log('      header:', header);
+			console.log('      dashes:', dashes);
+			console.log('     content:', content);
+			console.log('   linebelow:', linebelow);
+			console.log('captionbelow:', captionbelow);
+			
+			var position = 0;
+			columns = dashes.split(/[ ](?=[-])/);
+			rows = content.split( /^\n/m );
+			rows.unshift(header);
+			if( lineabove == '' && rows.length == 2){
+				console.info('simple table');
+				rows = content.split( /^/m );
+			}
+			else{
+				console.warn('multiline table');
+			}
+			
+			for(var c = 0, len = columns.length; c < len; c ++){
+				console.group(c, len, c+1==len);
+				srt = position;
+				end = (c+1==len ? undefined : position += columns[c].length+1);
+				console.log(srt, columns[c], end);
+				
+				for(var r = 0, height = rows.length; r < height; r++){
+					cell = '';
+					multirows = rows[r].split(/^/m);
+					for(var m = 0, m_height = multirows.length; m < m_height; m++){
+						cell += multirows[m].substring(srt, end) + '\n';
+					}
+					console.log(c, r+1);
+					console.log(cell);
+				}
+				console.groupEnd();
+			}
+			
+        } );
+        
+        text = text.replace( md_flag_DoSimpleTables, "" );
+        
+        return text;
+    }
      
     var md_flag_DoGrids = "3ee63c2476f49cd6c03c72e14687b4f7";
     var md_reg_DoGrids1 = new RegExp(

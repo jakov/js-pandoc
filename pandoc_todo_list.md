@@ -18,6 +18,20 @@
 > 2. Two
 > 3. Three 
 
+### This should behave differently
+asdf
+
+1. one
+
+2. two
+3. three
+
+qwer
+
+1. asdf
+b. qwer
+
+
 ## Completed
 * Header identifiers
 * require a blank line before a header
