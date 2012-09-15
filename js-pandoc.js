@@ -884,7 +884,7 @@ function Pandoc(text, options = {}) {
         
         return text;
     }
-    function _RunHeaderId( header_id = '' ){
+    function _RunHeaderId( header_id = '', already_used_array = false){
     	console.group(header_id);
     	// * Remove all formatting, links, etc.
     	html_to_text = html_to_text || document.createElement('span');
@@ -916,21 +916,24 @@ function Pandoc(text, options = {}) {
 		header_id = ( header_id == '' ? 'section' : header_id );
 		
 		// when several headers have the same text; in this case, the first will get an identifier as described above; the second will get the same identifier with -1 appended; the third with -2; and so on.
-		if(typeof headers_in_use!='undefined'){
-			var new_header = header_id;
-			var new_counter = 1;
-			while( headers_in_use.indexOf(new_header)>=0 ){
-				new_header = header_id + '-' + new_counter;
-				new_counter++;
+		if(!already_used_array){
+			if(typeof headers_in_use=='undefined'){
+				headers_in_use = [];
 			}
-			if(new_header != header_id){
-				header_id = new_header;
-				console.warn('renamed to:' + header_id);
-			}
+			already_used_array = headers_in_use;
 		}
-		else {
-			headers_in_use = [];
+
+		var new_header = header_id;
+		var new_counter = 1;
+		while( already_used_array.indexOf(new_header)>=0 ){
+			new_header = header_id + '-' + new_counter;
+			new_counter++;
 		}
+		if(new_header != header_id){
+			header_id = new_header;
+			console.warn('renamed to:' + header_id);
+		}
+
 		console.info('#'+header_id);
 		console.groupEnd();
     	return header_id;
@@ -951,7 +954,7 @@ function Pandoc(text, options = {}) {
     + 		'(?:(?:[|^].*|.*[|^].*)\\n)'			// |content|content|
     +       '(?:(?:[\'].*|.*[\'].*)\\n)*'		// !more   !more   !
     + 	')*?'
-    + 	'(?:[ ]*[-=|:]*[|][-=|:]*)\\n'			// |-------|=======| or ------|======
+    + 	'(?:[ ]*[-=|: ]*[|][-=|: ]*)\\n'			// | ----- |=======| or ------|======
 	+ ')'
     + '('								
     + 	'(?:'
@@ -1019,7 +1022,9 @@ console.log('underline:', underline, 'overline:', overline);
 		var v_align_all = [];
 		colgroup = [];
 		
-		v_header = [];
+		var v_header = [];
+		var colname = [];
+		var rowname = [];
 
         var table = [].concat(head_rows, body_rows, foot_rows);
         //var thead = [];
@@ -1038,7 +1043,7 @@ console.log('underline:', underline, 'overline:', overline);
         function fillrowuntil(rownum, colnum){
         	tn = {};
         	beforelength = two_dim_arr[rownum].length;
-        	console.log( typeof two_dim_arr[rownum][beforelength-1] == 'object' ? two_dim_arr[rownum][beforelength-1].colnum + two_dim_arr[rownum][beforelength-1].colspan : 0+1);
+        	console.info( typeof two_dim_arr[rownum][beforelength-1] == 'object' ? two_dim_arr[rownum][beforelength-1].colnum + two_dim_arr[rownum][beforelength-1].colspan : 0+1);
         	
         	var pointer = ( typeof two_dim_arr[rownum][beforelength-1] == 'object' ? two_dim_arr[rownum][beforelength-1].colnum + two_dim_arr[rownum][beforelength-1].colspan : 0+1);
         	for(pointer; pointer <= colnum; pointer ++){
@@ -1056,6 +1061,7 @@ console.log('underline:', underline, 'overline:', overline);
 				
 				two_dim_arr[rownum].push(tn);
 				console.warn('this row was extended to be able to put the content somewhere');
+				console.log(two_dim_arr[rownum]);
 			}
         }
         
@@ -1074,13 +1080,14 @@ console.log('underline:', underline, 'overline:', overline);
         	colnum = 0;
         	advance = false;
         	for(x=0, cols_len = table[y].length; x < cols_len; x++ ){
-        			console.group('x:', x);
+        			console.group('x:', x, 'colnum:'+colnum);
 					td = {};
 	        		raw = table[y][x];
 	        		[, s, l, text, r, z] = raw.match(/^([|^'])([:;]?)(.*?)([:;]?)([|^']*)$/);
 	        		l = (l=='' ? ' ' : l);
 	        		r = (r=='' ? ' ' : r);
 	        		console.log([s,l,text,r,z]);
+	        		var pointer = rownum;
 					switch(s){
 	        			case "|":
 							h_align_srt = (l == ':' && r == ':' ? 'center' : l == ':' ? 'left' : r == ':' ? 'right' : 'default');
@@ -1107,7 +1114,7 @@ console.log('underline:', underline, 'overline:', overline);
 							
 							
 	        				if(!(y+1==underline || y+1==overline)){
-	        					fillrowuntil(rownum, colnum-1);
+	        					//fillrowuntil(rownum, colnum-1);
 	        				
 	        					advance = true;
 								td.raw = raw;
@@ -1123,7 +1130,19 @@ console.log('underline:', underline, 'overline:', overline);
 								td.v_align = 'default';
 								if(v_header[colnum]==true){
 									td.th = true;
+									rowname[rownum] = _RunHeaderId(String_trim(text));
 								}
+								if(y<underline || y>overline){
+									td.th = true;
+									colname[colnum] = _RunHeaderId(String_trim(text));
+								}
+								if(colname[colnum]){
+									td.colname = colname[colnum];
+								}
+								if(rowname[rownum]){
+									td.rowname = rowname[rownum];
+								}
+
 								
 								console.log(s,l,text,r,z.length+1, h_align);
 								
@@ -1147,23 +1166,31 @@ console.log('underline:', underline, 'overline:', overline);
 	        			break;
 	        			case "^":
 	        				if(!(y+1==underline || y+1==overline)){
-	        					console.log(two_dim_arr[rownum-1].length-1,colnum);
-	        					fillrowuntil(rownum-1, colnum);
-	        						        				
-	        					if(colnum<two_dim_arr[rownum-1].length){
-									tu = two_dim_arr[rownum-1][colnum];
-									tu.rowspan ++;	
+	        					console.log(two_dim_arr[pointer].length-1,colnum);
+	        					fillrowuntil(pointer, colnum);
+	        					
+	        					while(pointer > 0 && typeof two_dim_arr[pointer][colnum]=='undefined'){
+	        						pointer--;	
+	        						console.warn(two_dim_arr[pointer][colnum]);
+	        						tu = two_dim_arr[pointer][colnum];
 	        					}
-								else{
-									console.error('cannot extend rowspan of nonexisting cell');
+								tu.rowspan ++;	
+	        					if(colnum>=two_dim_arr[rownum-1].length){
+	        						console.error('cannot extend rowspan of nonexisting cell');
 								}
 							}
 	        			case "'":
 	        				if(!(y+1==underline || y+1==overline)){
 	        					fillrowuntil(rownum-1, colnum);
 	        				
-	        					if(colnum<two_dim_arr[rownum-1].length){
-	        						tu = two_dim_arr[rownum-1][colnum];
+								while(pointer > 0 && typeof two_dim_arr[pointer][colnum]=='undefined'){
+	        						pointer--;	
+	        						console.warn(two_dim_arr[pointer][colnum]);
+	        						tu = two_dim_arr[pointer][colnum];
+	        					}
+	        				
+	        					if(colnum<two_dim_arr[pointer].length){
+	        						tu = two_dim_arr[pointer][colnum];
 	        						tu.raw += raw + '\n';
 									tu.text += text+ '\n';
 									tu.l += l;
@@ -1185,8 +1212,8 @@ console.log('underline:', underline, 'overline:', overline);
 										console.warn('the next one will take my v_align');
 									}
 
-									if(colnum>0 ){
-										tl = two_dim_arr[rownum-1][colnum-1];
+									if(typeof two_dim_arr[pointer][colnum-1] != 'undefined' ){
+										tl = two_dim_arr[pointer][colnum-1];
 										if(tl.v_align_to_right){
 											tu.v_align = tl.v_align;
 											console.warn('i took the v_align from my left neighbour');
@@ -1202,7 +1229,8 @@ console.log('underline:', underline, 'overline:', overline);
 								else{
 									console.error('cannot put content into nonexisting cell');
 									
-								}					
+								}	
+								console.log('z.length+1:'+(z.length+1));				
 								colnum += z.length+1;
 							}
 	        			break;
@@ -1253,8 +1281,8 @@ console.log('underline:', underline, 'overline:', overline);
         spitoutabove = captionabove;
         spitoutbelow = captionbelow;
 	
-		captionabove = captionabove.replace(/^Table[:]|[:]/, '').trim();
-		captionbelow = captionbelow.replace(/^Table[:]|[:]/, '').trim();
+		captionabove = String_trim(captionabove.replace(/^Table[:]|[:]/, ''));
+		captionbelow = String_trim(captionbelow.replace(/^Table[:]|[:]/, ''));
 		 
 		captionabove = (captionabove=='' ? false : captionabove );
 		captionbelow = (captionbelow=='' ? false : captionbelow );
@@ -1284,9 +1312,11 @@ console.log('underline:', underline, 'overline:', overline);
 			for (var x = 0; x < cols_length; x++) {
 				var percent = Math.round( cols[x]*100/divisor );
 				if(html5){
+					//output += '<col class="col_'+x+' col_'+(x%2==0?'odd':'even')+'" style="width:'+ percent +'%" />\n';
 					output += '<col style="width:'+ percent +'%" />\n';
 				}
 				else{
+					//output += '<col class="col_'+x+' col_'+(x%2==0?'odd':'even')+'" width="'+ percent +'%" />\n';
 					output += '<col width="'+ percent +'%" />\n';
 				}
 			}
@@ -1299,6 +1329,7 @@ console.log('underline:', underline, 'overline:', overline);
 			two_dim_arr_rownum_length = two_dim_arr[rownum].length;
 			for(var colnum = 0; colnum < two_dim_arr_rownum_length; colnum++){
 				var td = two_dim_arr[rownum][colnum];
+				console.log(td);
 				if( typeof td != 'undefined'){
 					console.log(rownum, colnum, td.text);
 					block = _RunBlockGamut( td.text.replace(/[ ]*$/gm, '') );
@@ -1307,12 +1338,13 @@ console.log('underline:', underline, 'overline:', overline);
 						// strip away the <p>
 						block = block.replace(/^<p>|<\/p>$/g, '');
 					}
-					tc = (rownum<theadsize || td.th || rownum>=theadsize+tbodysize ? 'th' : 'td');
-					colspan = (td.colspan>1 ? ' colspan="'+td.colspan+'"': '');
-					rowspan = (td.rowspan>1 ? ' rowspan="'+td.rowspan+'"': '');
-					coord = (addcoordinates ? ' class="tc-'+td.colnum+'_'+td.rownum+'"':'');
+					//tc = (rownum<theadsize || td.th || rownum>=theadsize+tbodysize ? 'th' : 'td');
+					tc = (td.th ? 'th' : 'td');
+					var colspan = (td.colspan>1 ? ' colspan="'+td.colspan+'"': '');
+					var rowspan = (td.rowspan>1 ? ' rowspan="'+td.rowspan+'"': '');
+					var coord = (addcoordinates ? ' class="r'+td.rownum+' c'+td.colnum+' r'+(td.rownum % 2 == 0 ? 'o' : 'e')+' c'+(td.colnum % 2 == 0 ? 'o' : 'e')+(td.colname ? ' c_'+td.colname : '')+(td.rowname ? ' r_'+td.rowname : '')+'"' : '');
 					td.v_align = (td.v_align=='justify' ? 'middle' : td.v_align);
-					style = '';
+					var style = '';
 					if( td.h_align!='default' || td.v_align!='default' ){			
 						if(html5){
 							style = ' style="';
@@ -1348,7 +1380,7 @@ console.log('underline:', underline, 'overline:', overline);
     + ')?'
     + '[ ]{0,' + md_less_than_tab + '}'								
     + '([ ]*[-]+[ ]*\\n)?'							// ----------------
-    + '((?:[^\\n]*\\n\\n?)*)'								// header  header  header
+    + '((?:[^\\n]*\\n\\n?)*)'						// header  header  header
     + '([ ]*[-=]*[ ]+[-= ]*)\\n'					// ------- ------- -------
     + '((?:[^\\n]*\\n\\n?)+?)'						// content content content
     + '([- ]*[-][- ]*\\n)?'							// ------ ------ ----
@@ -1374,35 +1406,58 @@ console.log('underline:', underline, 'overline:', overline);
 			console.log('   linebelow:', linebelow);
 			console.log('captionbelow:', captionbelow);
 			
+			var first_is_header = (header=='' ? 0 : 1);
+			
 			var position = 0;
 			columns = dashes.split(/[ ](?=[-])/);
 			rows = content.split( /^\n/m );
-			rows.unshift(header);
-			if( lineabove == '' && rows.length == 2){
+
+			if( lineabove == '' && rows.length == 1){
 				console.info('simple table');
 				rows = content.split( /^/m );
 			}
 			else{
 				console.warn('multiline table');
+				// more than one row of headers?!
+				// footer?!
 			}
 			
+			if(first_is_header){
+				rows.unshift(header);
+			}			
+			var two_dim_arr = [];
+			var cols = [];
+			var v_header = [];
 			for(var c = 0, len = columns.length; c < len; c ++){
 				console.group(c, len, c+1==len);
 				srt = position;
 				end = (c+1==len ? undefined : position += columns[c].length+1);
-				console.log(srt, columns[c], end);
+				cols.push(columns[c].length+1);
+				console.log(srt, columns[c], end, columns[c].match(/[=]/));
+				if(columns[c].match(/[=]/)){
+					v_header[c] = true;
+				}
 				
-				for(var r = 0, height = rows.length; r < height; r++){
-					cell = '';
+				var height = rows.length;
+				for(var r = 0;  r < height; r++){
+					two_dim_arr[r] = two_dim_arr[r] || [];
+					var cell = '';
 					multirows = rows[r].split(/^/m);
 					for(var m = 0, m_height = multirows.length; m < m_height; m++){
-						cell += multirows[m].substring(srt, end) + '\n';
+						cell += multirows[m].substring(srt, end).replace(/^[ ]*|[ \n]*$/g, '') + '\n';
 					}
 					console.log(c, r+1);
 					console.log(cell);
+					two_dim_arr[r][c] = {text:cell, h_align:'left', v_align:'default', colnum:c, rownum:r};
+					if(v_header[c]==true){
+						two_dim_arr[r][c].th = true;
+					}
 				}
 				console.groupEnd();
 			}
+			
+			console.log(two_dim_arr, [first_is_header, height-first_is_header, 0], 'some table', cols);
+			return _printTable( two_dim_arr, [first_is_header, height-first_is_header, 0], 'some table', cols);
 			
         } );
         
@@ -1892,9 +1947,9 @@ console.log('underline:', underline, 'overline:', overline);
 				var last = first_row.length-1;
 				for(var slice = 0; slice < first_row_length; slice++){
 					if(cols.length<=slice){cols[slice] = first_row[slice].length+1;}
-					srt = position;
-					end = (slice==last ? undefined : position += first_row[slice].length+1);
-					cell = '';
+					var srt = position;
+					var end = (slice==last ? undefined : position += first_row[slice].length+1);
+					var cell = '';
 					
 					for(var num = 0; num < lines_length; num++){
 						console.log(num, lines[num]);
