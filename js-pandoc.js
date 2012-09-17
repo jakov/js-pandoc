@@ -1378,8 +1378,8 @@ console.log('underline:', underline, 'overline:', overline);
     + 	'(?:Table[:]|[:])[\\S\\s]*?[^\\n]\\n'		// captionabove
     + 	'\\n'
     + ')?'
-    + '[ ]{0,' + md_less_than_tab + '}'								
-    + '([ ]*[-]+[ ]*\\n)?'							// ----------------
+    + '([ ]{0,' + md_less_than_tab + '}'
+    + 	'[-]+[ ]*\\n)?'							// ----------------
     + '((?:[^\\n]*\\n\\n?)*)'						// header  header  header
     + '([ ]*[-=]*[ ]+[-= ]*)\\n'					// ------- ------- -------
     + '((?:[^\\n]*\\n\\n?)+?)'						// content content content
@@ -1444,13 +1444,18 @@ console.log('underline:', underline, 'overline:', overline);
 					var cell = '';
 					multirows = rows[r].split(/^/m);
 					for(var m = 0, m_height = multirows.length; m < m_height; m++){
-						cell += multirows[m].substring(srt, end).replace(/^[ ]*|[ \n]*$/g, '') + '\n';
+						cell += String_trim(multirows[m].substring(srt, end)) + '\n';
 					}
-					console.log(c, r+1);
+					console.log(c+1, r+1);
 					console.log(cell);
-					two_dim_arr[r][c] = {text:cell, h_align:'left', v_align:'default', colnum:c, rownum:r};
-					if(v_header[c]==true){
+					if(cell.match(/^\s*\<\s*$/)){console.info(cell);two_dim_arr[r][c-1].colspan = two_dim_arr[r][c-1].colspan+1 || 2;}
+					else if(cell.match(/^\s*\^\s*$/)){console.info(cell);two_dim_arr[r-1][c].rowspan = two_dim_arr[r-1][c].rowspan+1 || 2;}
+					else{
+						two_dim_arr[r][c] = {text:cell, h_align:'left', v_align:'default', colnum:c+1, rownum:r+1};
+					}
+					if(v_header[c]==true || r+1 == first_is_header){
 						two_dim_arr[r][c].th = true;
+						
 					}
 				}
 				console.groupEnd();
