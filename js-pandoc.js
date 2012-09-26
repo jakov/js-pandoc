@@ -1464,16 +1464,7 @@ console.log('underline:', underline, 'overline:', overline);
 					}
 					console.log(c+1, r+1);
 					console.log(cell);
-						
-					if (false){
-					//if(ignore[r] >= c){
-						console.log(c+1, r+1);
-						if(String_trim(cell)!=''){
-							console.error('', 'cell not displayed');
-							console.warn(cell);
-						}
-
-					}
+					
 					if(killer[1] > 0){
 						console.error('killer', killer);
 						for(var i = killer[0]; i > 0; i-- ){
@@ -1489,6 +1480,7 @@ console.log('underline:', underline, 'overline:', overline);
 							var colpointer = c;
 							while( (typeof two_dim_arr[r][colpointer] == "undefined" || ( arrow[1]=="<<" && String_trim(two_dim_arr[r][colpointer].text)=='' ) ) && colpointer > 0){
 								delete two_dim_arr[r][colpointer];
+								console.warn(r, colpointer, ' cell deleted');
 								colpointer--;
 							}
 							console.info(c-colpointer);
@@ -1500,6 +1492,7 @@ console.log('underline:', underline, 'overline:', overline);
 							var rowpointer = r;
 							while( (typeof two_dim_arr[rowpointer][c] == "undefined" || ( arrow[1]=="^^" && String_trim(two_dim_arr[rowpointer][c].text)=='' ) ) && rowpointer > 0){
 								delete two_dim_arr[rowpointer][c];
+								console.warn(r, colpointer, ' cell deleted');
 								rowpointer--;
 							}
 							console.info(r-rowpointer);
