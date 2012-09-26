@@ -141,6 +141,17 @@ Tropical Bananas                 $1.34   - built-in wrapper
 -----------------------------------------------------------
 ```
 
+* Doubling the symbol (`^^` or `<<`) will jump over all empty cells:
+
+```
+qwer asdf tzui jklö 
+==== ---- ---- -----
+q    a         <<   
+w    s    z    k    
+e         u    <    
+r    ^^   ^    ö    
+```
+
 
 ### Grid Style
 

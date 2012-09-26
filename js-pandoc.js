@@ -945,27 +945,27 @@ function Pandoc(text, options = {}) {
       '^'
     + '('
     + '[ ]{0,' + md_less_than_tab + '}'
-    + 	'(?:Table[:]|[:])[\\S\\s]*?[^\\n]\\n'				// captionabove
+    + 	'(?:Table[:]|[:])[\\S\\s]*?[^\\n]\\n'	// captionabove
     + 	'\\n'
     + ')?'
     + '[ ]{0,' + md_less_than_tab + '}'
     + '('								
     + 	'(?:'
-    + 		'(?:(?:[|^].*|.*[|^].*)\\n)'			// |content|content|
+    + 		'(?:(?:[|^].*|.*[|^].*)\\n)'		// |content|content|
     +       '(?:(?:[\'].*|.*[\'].*)\\n)*'		// !more   !more   !
     + 	')*?'
-    + 	'(?:[ ]*[-=|: ]*[|][-=|: ]*)\\n'			// | ----- |=======| or ------|======
+    + 	'(?:[ ]*[-=|: ]*[|][-=|: ]*)\\n'		// | ----- |=======| or ------|======
 	+ ')'
     + '('								
     + 	'(?:'
-    + 		'(?:(?:[|^].*|.*[|^].*)\\n)'			// |content|content|
+    + 		'(?:(?:[|^].*|.*[|^].*)\\n)'		// |content|content|
     +       '(?:(?:[\'].*|.*[\'].*)\\n)*?'		// !more   !more   !
     + 	')+?'
     + ')'
     + '(?:('
     + 	'(?:[ ]*[-=|:]*[|][-=|:]*)\\n'			// |-------|=======| or ------|======							
     + 	'(?:'
-    + 		'(?:(?:[|^].*|.*[|^].*)\\n)'			// |content|content|
+    + 		'(?:(?:[|^].*|.*[|^].*)\\n)'		// |content|content|
     +       '(?:(?:[\'].*|.*[\'].*)\\n)*'		// !more   !more   !
     + 	')*'
     + '))?'
@@ -1277,31 +1277,34 @@ console.log('underline:', underline, 'overline:', overline);
         	console.groupEnd();
         }
         
-        
-        spitoutabove = captionabove;
-        spitoutbelow = captionbelow;
-	
-		captionabove = String_trim(captionabove.replace(/^Table[:]|[:]/, ''));
-		captionbelow = String_trim(captionbelow.replace(/^Table[:]|[:]/, ''));
-		 
-		captionabove = (captionabove=='' ? false : captionabove );
-		captionbelow = (captionbelow=='' ? false : captionbelow );
-        
-        console.log(captionabove);
-        console.log(captionbelow);
 
         output = '';
-        output += (captionabove ? '' : spitoutabove + '\n' ); //spit out the first table header if it doesnt contain anything
-        output += _printTable( two_dim_arr, [theadsize, tbodysize, tfootsize], (captionabove || captionbelow ) );
-        output += ( captionbelow ? captionabove ? '\n' + spitoutbelow : '' : '\n' + spitoutbelow ); // spit out the superfluous second table caption
+        output += _printTable( two_dim_arr, [theadsize, tbodysize, tfootsize], [captionabove, captionbelow] );
         console.log(output);
 		
         return _HashBlock( output ) + "\n";
         
     }
     
-    function _printTable( two_dim_arr, [theadsize, tbodysize, tfootsize], caption = '', cols = false){
-    	var output = '<table>\n';
+    function _printTable( two_dim_arr, [theadsize, tbodysize, tfootsize], [captionabove, captionbelow], cols = false){
+    
+	    spitoutabove = captionabove;
+        spitoutbelow = captionbelow;
+		
+		captionabove = String_trim(captionabove).replace(/^(Table)?[:]/, '');
+		captionbelow = String_trim(captionbelow).replace(/^(Table)?[:]/, '');
+		 
+		captionabove = (captionabove=='' ? false : captionabove );
+		captionbelow = (captionbelow=='' ? false : captionbelow );
+        
+        caption = (captionabove || captionbelow );
+        
+        console.log(captionabove);
+        console.log(captionbelow);
+    
+    	var output = (captionabove ? '' : spitoutabove + '\n' ); //spit out the first table header if it doesnt contain anything
+		
+    	output += '<table>\n';
         output += ( caption ? '<caption>' + _RunSpanGamut( caption ) + '</caption>\n' : '');
 		if(cols){
 			// <col width="8%" />
@@ -1366,6 +1369,7 @@ console.log('underline:', underline, 'overline:', overline);
 		
         }
         output += '</table>';
+                output += ( captionbelow ? captionabove ? '\n' + spitoutbelow : '' : '\n' + spitoutbelow ); // spit out the superfluous second table caption
         console.log(output);
         return output;
     }
@@ -1406,15 +1410,15 @@ console.log('underline:', underline, 'overline:', overline);
 			console.log('   linebelow:', linebelow);
 			console.log('captionbelow:', captionbelow);
 			
-			var first_is_header = (header=='' ? 0 : 1);
-			
 			var position = 0;
 			columns = dashes.split(/[ ](?=[-])/);
-			rows = content.split( /^\n/m );
+			rows =   content.split( /^\n/m );
+			headers = header.split( /^\n/m );
 
-			if( lineabove == '' && rows.length == 1){
+			if( rows.length == 1){
 				console.info('simple table');
 				rows = content.split( /^/m );
+				headers = header.split( /^/m );
 			}
 			else{
 				console.warn('multiline table');
@@ -1422,12 +1426,14 @@ console.log('underline:', underline, 'overline:', overline);
 				// footer?!
 			}
 			
-			if(first_is_header){
-				rows.unshift(header);
-			}			
+			var first_is_header = (header=='' ? 0 : headers.length);
+			
+			rows = [].concat(headers, rows);
+			
 			var two_dim_arr = [];
 			var cols = [];
 			var v_header = [];
+			var ignore = [];
 			for(var c = 0, len = columns.length; c < len; c ++){
 				console.group(c, len, c+1==len);
 				srt = position;
@@ -1439,8 +1445,12 @@ console.log('underline:', underline, 'overline:', overline);
 				}
 				
 				var height = rows.length;
+				var killer = [0,0];
 				for(var r = 0;  r < height; r++){
 					two_dim_arr[r] = two_dim_arr[r] || [];
+					ignore[r] = ignore[r] || -1;
+					console.group('r=', r, '; c=', c, '; ignore[',r,']=', ignore[r]);
+					
 					var cell = '';
 					multirows = rows[r].split(/^/m);
 					for(var m = 0, m_height = multirows.length; m < m_height; m++){
@@ -1448,21 +1458,66 @@ console.log('underline:', underline, 'overline:', overline);
 					}
 					console.log(c+1, r+1);
 					console.log(cell);
-					if(cell.match(/^\s*\<\s*$/)){console.info(cell);two_dim_arr[r][c-1].colspan = two_dim_arr[r][c-1].colspan+1 || 2;}
-					else if(cell.match(/^\s*\^\s*$/)){console.info(cell);two_dim_arr[r-1][c].rowspan = two_dim_arr[r-1][c].rowspan+1 || 2;}
-					else{
-						two_dim_arr[r][c] = {text:cell, h_align:'left', v_align:'default', colnum:c+1, rownum:r+1};
-					}
-					if(v_header[c]==true || r+1 == first_is_header){
-						two_dim_arr[r][c].th = true;
 						
+					if (false){
+					//if(ignore[r] >= c){
+						console.log(c+1, r+1);
+						if(String_trim(cell)!=''){
+							console.error('', 'cell not displayed');
+							console.warn(cell);
+						}
+
 					}
+					if(killer[1] > 0){
+						console.error('killer', killer);
+						for(var i = killer[0]; i > 0; i-- ){
+							delete two_dim_arr[r][c-i];
+						}
+						killer[1]--;
+					}
+					else{
+						arrow = cell.match(/^\s*(\<{1,2}|\^{1,2})\s*$/);
+						//(arrow)
+						if(arrow && (arrow[1] == "<" || arrow[1] == "<<") && c > 0){
+							console.warn('<< or <');
+							var colpointer = c;
+							while( (typeof two_dim_arr[r][colpointer] == "undefined" || ( arrow[1]=="<<" && String_trim(two_dim_arr[r][colpointer].text)=='' ) ) && colpointer > 0){
+								delete two_dim_arr[r][colpointer];
+								colpointer--;
+							}
+							console.info(c-colpointer);
+							killer[0] = two_dim_arr[r][colpointer].colspan = c-colpointer+1;
+							killer[1] = two_dim_arr[r][colpointer].rowspan-1;
+						}
+						else if(arrow && (arrow[1] == "^" || arrow[1] == "^^") && r > 0){
+							console.warn('^^ or ^');
+							var rowpointer = r;
+							while( (typeof two_dim_arr[rowpointer][c] == "undefined" || ( arrow[1]=="^^" && String_trim(two_dim_arr[rowpointer][c].text)=='' ) ) && rowpointer > 0){
+								delete two_dim_arr[rowpointer][c];
+								rowpointer--;
+							}
+							console.info(r-rowpointer);
+							if(typeof two_dim_arr[rowpointer][c] != "undefined" ){
+								two_dim_arr[rowpointer][c].rowspan = r-rowpointer+1;
+							}
+						}
+						else{
+							two_dim_arr[r][c] = {text:cell, h_align:'left', v_align:'default', colnum:c+1, rownum:r+1};
+						}
+						if( typeof two_dim_arr[r][c] !="undefined" && (v_header[c]==true || r < first_is_header)){
+							two_dim_arr[r][c].th = true;	
+						}
+
+						ignore[r] = -1;
+					}
+					console.groupEnd();
+
 				}
 				console.groupEnd();
 			}
 			
-			console.log(two_dim_arr, [first_is_header, height-first_is_header, 0], 'some table', cols);
-			return _printTable( two_dim_arr, [first_is_header, height-first_is_header, 0], 'some table', cols);
+			console.log(two_dim_arr, [first_is_header, height-first_is_header, 0], [captionabove, captionbelow], cols);
+			return _printTable( two_dim_arr, [first_is_header, height-first_is_header, 0], [captionabove, captionbelow], cols);
 			
         } );
         
@@ -1965,8 +2020,8 @@ console.log('underline:', underline, 'overline:', overline);
 					two_dim_arr[row][slice] = {text:cell, h_align:'left', v_align:'default'};
 				}
 			}
-			console.log(two_dim_arr, [first_is_header, arr.length-first_is_header, 0], 'some table', cols);
-			return _printTable( two_dim_arr, [first_is_header, arr.length-first_is_header, 0], 'some table' , cols);
+			console.log(two_dim_arr, [first_is_header, arr.length-first_is_header, 0], [captionabove, captionbelow], cols);
+			return _printTable( two_dim_arr, [first_is_header, arr.length-first_is_header, 0], [captionabove, captionbelow], cols);
 		}
 	}   
      
