@@ -141,7 +141,7 @@ Tropical Bananas                 $1.34   - built-in wrapper
 -----------------------------------------------------------
 ```
 
-* Doubling the symbol (`^^` or `<<`) will jump over all empty cells:
+* Doubling the symbol (`^^` or `<<`) will span until the next cell with content by skipping all empty cells. (Note that in the following table, `ö` will be ignored, because it is "below" the span of the cell continuing `u`.)
 
 ```
 qwer asdf tzui jklö 

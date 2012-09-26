@@ -2513,7 +2513,7 @@ function int2roman(number) {
     
     var md_reg_DoBlockQuotes = new RegExp(
       '('
-    +   (pandoc && !strict ? '.*\\n' : '') // match the line before the blockquote, a quasi "lookbehind"
+    +   (pandoc ? '.*\\n' : '') // match the line before the blockquote, a quasi "lookbehind"
     +	'('
     +       '[ \\t]*>[ \\t]?'
 	+		'.+\\n'
