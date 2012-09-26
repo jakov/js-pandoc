@@ -951,7 +951,7 @@ function Pandoc(text, options = {}) {
     + '[ ]{0,' + md_less_than_tab + '}'
     + '('								
     + 	'(?:'
-    + 		'(?:(?:[|^].*|.*[|^].*)\\n)'		// |content|content|
+    + 		'(?:(?:[|^].*|.*[|^].*)\\n)'		// |header |header |
     +       '(?:(?:[\'].*|.*[\'].*)\\n)*'		// !more   !more   !
     + 	')*?'
     + 	'(?:[ ]*[-=|: ]*[|][-=|: ]*)\\n'		// | ----- |=======| or ------|======
@@ -965,7 +965,7 @@ function Pandoc(text, options = {}) {
     + '(?:('
     + 	'(?:[ ]*[-=|:]*[|][-=|:]*)\\n'			// |-------|=======| or ------|======							
     + 	'(?:'
-    + 		'(?:(?:[|^].*|.*[|^].*)\\n)'		// |content|content|
+    + 		'(?:(?:[|^].*|.*[|^].*)\\n)'		// |footer |footer |
     +       '(?:(?:[\'].*|.*[\'].*)\\n)*'		// !more   !more   !
     + 	')*'
     + '))?'
@@ -1026,7 +1026,10 @@ console.log('underline:', underline, 'overline:', overline);
 		var colname = [];
 		var rowname = [];
 
-        var table = [].concat(head_rows, body_rows, foot_rows);
+		var table = [];
+        if(head_rows.length > 0){var table = table.concat(head_rows);}
+        if(body_rows.length > 0){var table = table.concat(body_rows);}
+		if(foot_rows.length > 0){var table = table.concat(foot_rows);}
         //var thead = [];
         //var tbody = [];
         
@@ -1276,11 +1279,13 @@ console.log('underline:', underline, 'overline:', overline);
         	}*/
         	console.groupEnd();
         }
-        
 
         output = '';
+        if(two_dim_arr[0].length == 0){two_dim_arr.shift();theadsize--;}
+        if(two_dim_arr[two_dim_arr.length-1].length == 0){two_dim_arr.pop();}
+        console.log(two_dim_arr);
         output += _printTable( two_dim_arr, [theadsize, tbodysize, tfootsize], [captionabove, captionbelow] );
-        console.log(output);
+
 		
         return _HashBlock( output ) + "\n";
         
@@ -1364,6 +1369,7 @@ console.log('underline:', underline, 'overline:', overline);
 				}
 			}
 			output += '</tr>\n';
+			
 			console.log((rownum==theadsize-1 ? '</thead>\n' : rownum==theadsize+tbodysize-1 ? '</tbody>\n' : rownum==theadsize+tbodysize+tfootsize-1 ? '</tfoot>\n' : ''));
 			output += (rownum==theadsize-1 ? '</thead>\n' : rownum==theadsize+tbodysize-1 ? '</tbody>\n' : rownum==theadsize+tbodysize+tfootsize-1 ? '</tfoot>\n' : '');
 		
@@ -1383,11 +1389,11 @@ console.log('underline:', underline, 'overline:', overline);
     + 	'\\n'
     + ')?'
     + '([ ]{0,' + md_less_than_tab + '}'
-    + 	'[-]+[ ]*\\n)?'							// ----------------
-    + '((?:[^\\n]*\\n\\n?)*)'						// header  header  header
+    + 	'[-]+[ ]*\\n)?'								// ----------------
+    + '((?:[^\\n]+\\n(?:\\n(?!\\n))?)*)'						// header  header  header
     + '([ ]*[-=]*[ ]+[-= ]*)\\n'					// ------- ------- -------
-    + '((?:[^\\n]*\\n\\n?)+?)'						// content content content
-    + '([- ]*[-][- ]*\\n)?'							// ------ ------ ----
+    + '((?:[^\\n]+\\n(?:\\n(?!\\n))?)+?)'						// content content content
+    + '([-= ]*[-=][-= ]*\\n)?'							// ------ ------ ----
     + '('
     + 	'[ ]{0,' + md_less_than_tab + '}'
     + 	'\\n'
@@ -1502,7 +1508,7 @@ console.log('underline:', underline, 'overline:', overline);
 							}
 						}
 						else{
-							two_dim_arr[r][c] = {text:cell, h_align:'left', v_align:'default', colnum:c+1, rownum:r+1};
+							two_dim_arr[r][c] = {raw:cell, text:cell, h_align:'left', v_align:'default', colnum:c+1, rownum:r+1};
 						}
 						if( typeof two_dim_arr[r][c] !="undefined" && (v_header[c]==true || r < first_is_header)){
 							two_dim_arr[r][c].th = true;	
@@ -2507,9 +2513,6 @@ function int2roman(number) {
         return text;
     }
     
-     
-    
-     
     
     var md_reg_DoBlockQuotes = new RegExp(
       '('
