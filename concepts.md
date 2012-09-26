@@ -152,6 +152,23 @@ e         u    <
 r    ^^   ^    ö    
 ```
 
+* typing through the whitepaces borders (the last column of spaces) should make the neighboring cells span (However this makes it a lot more complex to code!). In the example below the `u` in `Attributes` crosses the whitespace border and the `more` in `Tropical even more tropical` makes the row be non-empty only in the left cell column. (The later would conflict with an empty line deciding between "simple" and "multiline" mode!!! It could also just be a simple table with empty cells!!!). (Not yet implemented)
+
+```
+-----------------------------------------------------------
+                                  Attributes               
+
+Origin   Fruit                   Price   Advantages        
+=======  =============   -------------   ------------------
+Tropical Bananas                 $1.34   - built-in wrapper
+even                                     - bright color    
+more 
+tropical Oranges                 $2.10   - cures scurvy    
+                                         - tasty           
+-----------------------------------------------------------
+```
+
+
 
 ### Grid Style
 

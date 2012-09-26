@@ -1417,7 +1417,7 @@ console.log('underline:', underline, 'overline:', overline);
 			console.log('captionbelow:', captionbelow);
 			
 			var position = 0;
-			columns = dashes.split(/[ ](?=[-])/);
+			columns = dashes.split(/[ ](?=[-=])/);
 			rows =   content.split( /^\n/m );
 			headers = header.split( /^\n/m );
 
