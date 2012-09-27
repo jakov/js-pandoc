@@ -64,6 +64,16 @@ It's main advantage is that you can freely use block level elements. This is the
 
 ### Pipe Style
 
+*	As it was already proposed on the Markdown discussion list, numbers next to the 	finishing bar will be interpreted like multiple bars. E.g. `| cell 7|` will be the 	same as `| cell |||||||` (with seven bars on the right). To 'escape' this behavior, 	just place a blank before the pipe: `| cell 7 |` will say 'cell 7'.
+
+	```
+	|a |b |c |d |e |f |
+	|--|--|--|--|--|--|
+	|r |s |t      3|u |
+	|v |w         4|x |
+	```
+
+
 * In addition to the colspan feature of MultiMarkdown, *rowspan* could be provided using `^` instead of a bar. In the following example the fruits will each span two rows:
 
 	```
@@ -75,7 +85,7 @@ It's main advantage is that you can freely use block level elements. This is the
 ^           | tasty            |
 ```
 
-* Similarly, to enable multi-line content for table cells, I propose to use the apostrophe (`'`) to widen the cell vertically for writing. This will however not affect the rowspan, but provide a way to use block elements inside a table cell!
+* Similarly, to enable multi-line content for table cells, I propose to use the apostrophe (`'`) to widen the cell vertically for writing. This will however not affect the rowspan, but provide a way to use block elements inside a table cell! Compare also a [proposal in the discussion list](http://six.pairlist.net/pipermail/markdown-discuss/2009-June/001600.html) (which I stumbled upon after my initial idea, that's why i used `'` instead of `:`. Also in my version the cells get extended *below*.).
 
 	The following table should result in the exactly the same output as the grid table example above (even the col width should be the same), with a list for each of the fruits' advantages:
 

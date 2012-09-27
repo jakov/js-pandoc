@@ -1086,7 +1086,7 @@ console.log('underline:', underline, 'overline:', overline);
         			console.group('x:', x, 'colnum:'+colnum);
 					td = {};
 	        		raw = table[y][x];
-	        		[, s, l, text, r, z] = raw.match(/^([|^'])([:;]?)(.*?)([:;]?)([|^']*)$/);
+	        		[, s, l, text, r, z] = raw.match(/^([|^'])([:;]?)(.*?)([:;]?)(\d+|[|^']*)$/);
 	        		l = (l=='' ? ' ' : l);
 	        		r = (r=='' ? ' ' : r);
 	        		console.log([s,l,text,r,z]);
@@ -1127,7 +1127,8 @@ console.log('underline:', underline, 'overline:', overline);
 								td.colnum = colnum;
 								td.rownum = rownum;
 								td.height = 1;
-								td.colspan = z.length+1;
+								//td.colspan = z.length+1;
+								td.colspan = ( z.match(/\d+/) ? z*1 : z.length+1 );
 								td.rowspan = 1;
 								td.h_align = h_align;
 								td.v_align = 'default';
@@ -1147,7 +1148,7 @@ console.log('underline:', underline, 'overline:', overline);
 								}
 
 								
-								console.log(s,l,text,r,z.length+1, h_align);
+								console.log(s,l,text,r,td.colspan, h_align);
 								
 								two_dim_arr[rownum][colnum] = td;
 								
@@ -1164,7 +1165,7 @@ console.log('underline:', underline, 'overline:', overline);
 	        						console.log('colgroup:',colgroup);
 	        					}
 	        					
-	        					colnum += z.length+1;
+	        					colnum += ( z.match(/\d+/) ? z*1 : z.length+1 );
 	        				}
 	        			break;
 	        			case "^":
@@ -1233,8 +1234,8 @@ console.log('underline:', underline, 'overline:', overline);
 									console.error('cannot put content into nonexisting cell');
 									
 								}	
-								console.log('z.length+1:'+(z.length+1));				
-								colnum += z.length+1;
+								console.log('( z.match(/\d+/) ? z*1 : z.length+1 ):'+( z.match(/\d+/) ? z*1 : z.length+1 ));				
+								colnum += ( z.match(/\d+/) ? z*1 : z.length+1 );
 							}
 	        			break;
 	        		}
@@ -1253,18 +1254,16 @@ console.log('underline:', underline, 'overline:', overline);
         		rownum++;
         	}
         	
+        	console.info('y:', y);
 			if(y+1==underline-1){
-        		console.error('y:', y);
         		theadsize = rownum;
         		console.log('theadsize:',theadsize);
         	}
         	else if(y+1==overline-1){
-        		console.error('y:', y);
         		tbodysize = rownum - theadsize;
 				console.log('tbodysize:',tbodysize);
         	}
         	else if(y==rows_len-1){
-           		console.error('y:', y);
         		tfootsize = rownum - theadsize - tbodysize;
 				console.log('tfootsize:',tfootsize);     		
         	}
@@ -1401,6 +1400,26 @@ console.log('underline:', underline, 'overline:', overline);
     + ')?'
     + '(?=\\n|' + md_flag_DoTables + ')'			//Stop at final double newline.
     , "gm" );
+    var md_reg_DoSimpleTables = new RegExp(
+      '^'
+    + '('
+    + 	'[ ]{0,' + md_less_than_tab + '}'
+    + 	'(?:Table[:]|[:])[\\S\\s]*?[^\\n]\\n'		// captionabove
+    + 	'\\n'
+    + ')?'
+    + '([ ]{0,' + md_less_than_tab + '}'
+    + 	'[-]+[ ]*\\n)?'								// ----------------
+    + '((?:[^\\n]+\\n\\n?)*)'						// header  header  header
+    + '([ ]*[-=]*[ ]+[-= ]*)\\n'					// ------- ------- -------
+    + '((?:[^\\n]+\\n\\n?)+?)'						// content content content
+    + '([-= ]*[-=][-= ]*\\n)?'							// ------ ------ ----
+    + '('
+    + 	'[ ]{0,' + md_less_than_tab + '}'
+    + 	'\\n'
+    + 	'(?:Table[:]|[:])[\\S\\s]*?[^\\n]\\n'		// captionbelow
+    + ')?'
+    + '(?=\\n|' + md_flag_DoTables + ')'			//Stop at final double newline.
+    , "gm" );
 	function _DoSimpleTables( text ) {
         
         text += md_flag_DoSimpleTables;
@@ -1421,7 +1440,7 @@ console.log('underline:', underline, 'overline:', overline);
 			rows =   content.split( /^\n/m );
 			headers = header.split( /^\n/m );
 
-			if( rows.length == 1){
+			if( lineabove == '' ){
 				console.info('simple table');
 				rows = content.split( /^/m );
 				headers = header.split( /^/m );
@@ -1458,9 +1477,11 @@ console.log('underline:', underline, 'overline:', overline);
 					console.group('r=', r, '; c=', c, '; ignore[',r,']=', ignore[r]);
 					
 					var cell = '';
+					var whiteborder = '';
 					multirows = rows[r].split(/^/m);
 					for(var m = 0, m_height = multirows.length; m < m_height; m++){
-						cell += String_trim(multirows[m].substring(srt, end)) + '\n';
+						cell += multirows[m].substring(srt, end) + '\n';
+						whiteborder += multirows[m].substring(srt-1, srt);
 					}
 					console.log(c+1, r+1);
 					console.log(cell);
@@ -1474,14 +1495,27 @@ console.log('underline:', underline, 'overline:', overline);
 					}
 					else{
 						arrow = cell.match(/^\s*(\<{1,2}|\^{1,2})\s*$/);
+						automatic_colspan = whiteborder.match(/\S/);
 						//(arrow)
-						if(arrow && (arrow[1] == "<" || arrow[1] == "<<") && c > 0){
+						if(automatic_colspan || ( arrow && (arrow[1] == "<" || arrow[1] == "<<") && c > 0 ) ){
 							console.warn('<< or <');
 							var colpointer = c;
-							while( (typeof two_dim_arr[r][colpointer] == "undefined" || ( arrow[1]=="<<" && String_trim(two_dim_arr[r][colpointer].text)=='' ) ) && colpointer > 0){
+							while( (typeof two_dim_arr[r][colpointer] == "undefined" || ( !automatic_colspan && arrow[1]=="<<" && String_trim(two_dim_arr[r][colpointer].text)=='' ) ) && colpointer > 0){
 								delete two_dim_arr[r][colpointer];
 								console.warn(r, colpointer, ' cell deleted');
 								colpointer--;
+							}
+							if(automatic_colspan){
+								console.warn('automatic_colspan');
+								//console.log(cell.split(/^/m), two_dim_arr[r][colpointer].raw.substr(0,two_dim_arr[r][colpointer].raw.length-1).split(/\n/g));
+								addto = two_dim_arr[r][colpointer].raw.substr(0,two_dim_arr[r][colpointer].raw.length-1).split(/\n/g);
+								add = cell.split(/^/m);
+								var resultcell = '';
+								for(var m = 0, m_height = add.length; m < m_height; m++){
+									resultcell += (addto[m]||'') + (add[m]||'\n');
+								}
+								two_dim_arr[r][colpointer].raw = resultcell;
+								two_dim_arr[r][colpointer].text = resultcell;
 							}
 							console.info(c-colpointer);
 							killer[0] = two_dim_arr[r][colpointer].colspan = c-colpointer+1;
