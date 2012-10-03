@@ -4,23 +4,10 @@
 * Delimited code blocks
 * --section-divs
 * --toc|--table-of-contents
-* > ## Ordered
-> 
-> Tight:
-> 
-> 1.	First
-> 2.	Second
-> 3.	Third
-> 
-> and:
-> 
-> 1. One
-> 2. Two
-> 3. Three
 
-* automatic align in simple tables
+* automatic align in whitespace tables
+* overrule align in whitespace tables
 * footers for whitespace-tables
-
 * "whitespace" tables rowspan
 
 
@@ -88,8 +75,91 @@
 	
 	
 	
-* whitespace tables rowspan?!?
+* whitespace tables rowspan?!? Awsome!!!
+
+```
+---
+1111 2222 mmmm
+---- ---- ----
+3333 4444 nnnn
+5555 6666 oooo
+
+7777 8888 pppp
+
+99999aaaa qqqq
+wwww xxxx yyyy
+
+bbbbbcccc rrrr
+dddd eeee ssss
+
+ffff gggg tttt
+hhhhhjjjj uuuu
+kkkk llll vvvv
+
+ffff gggggtttt
+hhhh jjjj uuuu
+kkkkkllll vvvv
+
+ffff gggggtttt
+hhhh jjjj  ^  
+kkkkkllll vvvv
+
+ffff gggggtttt
+hhhh  ^    ^    
+kkkkkllll vvvv
+
+ffff gggggtttt
+hhhh          
+kkkk llll vvvv
+
+edgecasebelow:
+
+span one    
+cell      two
+----
+```
+
+These cells should also merge without the `^`:
+
+```
+-
+ffff gggggtttt
+hhhh jjjj  ^  
+kkkkkllll vvvv
+
+ffff gggggtttt
+hhhh  ^    ^    
+kkkkkllll vvvv
+-
+```
+
+* how to handle the edge case on the bottom?!? Empty cells!
+
+* optionally delay parsing with the time needed for parsing the last time, e.g. 300ms parsing => 300ms delay after last keyup (which is reset by another keyup): If you type quick enough, the parsing only starts after you finished typing.
+
 * pipe tables multispan, e.g. `| seven cells span 7|`
+
+* elastic tabstop tables should behave differently (`--->` symbolizes the tabs):
+
+	Until now:
+	
+	```
+	header one------------------->header two>header three
+	cell one with large content-->---------->cell three
+	```
+
+	How it should be:
+	
+	```
+	header one-------->header two>header three
+	cell one with large content->>cell three	
+	```
+	
+	That means that empty "cells" should behave like *cellspan*, which can be escaped by placing a blank in that cell.
+	
+	Until then, use `<` for colspan.
+	
+* different classes for `thead` and `tbody`, e.g. `hr1` for first row in head, `bra` for first row in body etc.
 
 ### This should behave differently
 asdf

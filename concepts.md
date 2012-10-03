@@ -72,6 +72,13 @@ It's main advantage is that you can freely use block level elements. This is the
 	|r |s |t      3|u |
 	|v |w         4|x |
 	```
+	
+	```
+	|a |b |c |d |e |f |
+	|--|--|--|--|--|--|
+	|r |s |t     |||u |
+	|v |w       ||||x |
+	```
 
 
 * In addition to the colspan feature of MultiMarkdown, *rowspan* could be provided using `^` instead of a bar. In the following example the fruits will each span two rows:
