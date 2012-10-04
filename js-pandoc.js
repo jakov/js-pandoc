@@ -1558,6 +1558,7 @@ console.log('underline:', underline, 'overline:', overline);
 				var cols = [];
 				var v_header = [];				
 				var height = rows.length;
+				console.groupCollapsed('fetching raw table cells');
 				for(var r = 0;  r < height; r++){
 					console.group('r:', r);
 					var position = 0;
@@ -1582,141 +1583,97 @@ console.log('underline:', underline, 'overline:', overline);
 						}
 						
 						console.info(cell);
-						whiteborder = rows[r].substring(srt-1, srt);
-
-						var rowpointer = r;
-						var colpointer = c;
-						two_dim_arr[r][c] = {};
-						var middlecell = false;
-
-					for(var w = 0; w<1; w++){
-						if(cell!='' && r != 0 && r != headers_length && !cell.match(/^\s*$/)){
-							console.warn('automatic rowspan');
-							while(rowpointer > 0 && two_dim_arr[rowpointer-1][colpointer].text != null && (typeof two_dim_arr[rowpointer][colpointer].text == "undefined" || two_dim_arr[rowpointer][colpointer].text == true || middlecell) ){
-								console.log('two_dim_arr['+rowpointer+']['+colpointer+']:', two_dim_arr[rowpointer][colpointer].text);
-								if( (whiteborder!=' ' && whiteborder!='') ){
-									console.error('', 'automatic colspan in middle of cell');
-									middlecell = true;
-								}
-								two_dim_arr[rowpointer][colpointer].text = true;
-								rowpointer--;
-							}
-						}
-						if( (whiteborder!=' ' && whiteborder!='') || cell.match(/^\s*<\s*$/) || (two_dim_arr[rowpointer][colpointer].text == false) || ( middlecell && rowpointer-1 >= 0 && two_dim_arr[rowpointer-1][colpointer].text == null) ){
-							console.warn('automatic colspan');
-							console.log('middlecell:'+middlecell);
-
-							while(colpointer > 0 && ( typeof two_dim_arr[rowpointer][colpointer].text == "undefined" || two_dim_arr[rowpointer][colpointer].text == false || ( middlecell && rowpointer-1 >= 0 && two_dim_arr[rowpointer-1][colpointer].text == null) ) ){
-								console.log('two_dim_arr['+rowpointer+']['+colpointer+']:', two_dim_arr[rowpointer][colpointer].text);
-								two_dim_arr[rowpointer][colpointer].text = false;
-								colpointer--;
-								middlecell = false;
-							}
-						}
-					}
-						console.log('two_dim_arr['+rowpointer+']['+colpointer+']:', two_dim_arr[rowpointer][colpointer].text);
-						
-						if(rowpointer == r && colpointer == c){
-							if(cell=='' || cell.match(/^\s*$/)){
-								console.log('empty');
-								two_dim_arr[rowpointer][colpointer].text = null;														
-							}
-							else{								
-								console.log('normal cell');
-								row_empty = false;
-								two_dim_arr[rowpointer][colpointer].text = cell;
-								if(r < headers_length){
-									two_dim_arr[rowpointer][colpointer].th = true;
-								}
-							}
-						}
-						else if(rowpointer != r && colpointer == c){
-							cell = cell.replace(/^(\s*)[\^\<](\s*)$/m, '$1 $2');
-							two_dim_arr[rowpointer][colpointer].text += '\n' + cell; 
-						}
-						else if(middlecell){
-							cell = cell.replace(/^(\s*)[\^\<](\s*)$/m, '$1 $2');
-							console.warn('merging cells horizontally');
-							var addto = two_dim_arr[rowpointer][colpointer].text.split(/\n/g);
-							console.log(addto);
-							var addto_length = addto.length;
-							var add = cell.split(/\n/g);
-							console.log(add);
-							two_dim_arr[rowpointer][colpointer].text = '';
-							for(var a = 0; a < addto_length; a++){
-								two_dim_arr[rowpointer][colpointer].text += (a!=0 ? '\n' : '') + (addto[a] || '') + (add[a] || '');
-							}
-							middlecell = false;
-						}
-						else{
-							cell = cell.replace(/^(\s*)[\^\<](\s*)$/m, '$1 $2');
-							two_dim_arr[rowpointer][colpointer].text += cell; 
-						}
-						console.info('two_dim_arr['+rowpointer+']['+colpointer+']:', two_dim_arr[rowpointer][colpointer].text);
+						two_dim_arr[r][c] = {text:cell};
+						//whiteborder = rows[r].substring(srt-1, srt);
 						console.groupEnd();
 					}
-					delete_array[r] = row_empty;
+					
 					console.groupEnd();
 				}
+				console.groupEnd();
 				
-				two_dim_arr_copy = two_dim_arr;
-				two_dim_arr = [];
-				
-				var two_dim_arr_copy_length = two_dim_arr_copy.length;
-				var rownum = -1;
-				for(var d = 0; d < two_dim_arr_copy.length; d++){
-					console.log(d, two_dim_arr_copy[d]);
-					if(delete_array[d]==true){
-						console.log(d, 'empty');
-					}
-					else{
-						rownum++;
-						two_dim_arr[rownum] = [];
-						var d_length = two_dim_arr_copy[d].length;
-						var colnum = -1;
-						for(var e = 0; e < d_length; e++){
+				console.group('merging spaning cells');
+				var height = two_dim_arr.length;
+				var rownum = 0;
+				for(var r = 0;  r < height; r++){
+					console.group(r);
+					rownum++;
+					var width = two_dim_arr[r].length;
+					var colnum = 0;
+					var anycell = false;
+					for(var c = 0; c < width; c ++){
+						if(typeof two_dim_arr[r][c] != 'undefined' && two_dim_arr[r][c].text!=''){
+							anycell = true;
 							colnum++;
-							console.log(d, e, rownum, colnum, two_dim_arr_copy[d][e].text);
-							if(typeof two_dim_arr_copy[d][e] == 'undefined'){
-								console.error('i dont know why you should get here!');	
-							}
-							else if(two_dim_arr_copy[d][e].text == null){
-								console.warn(two_dim_arr_copy[d][e]);
-								two_dim_arr[rownum][colnum] = {text:''};
-								two_dim_arr[rownum][colnum].rownum = rownum;
-								two_dim_arr[rownum][colnum].colnum = colnum;
-								two_dim_arr[rownum][colnum].h_align = 'default';
-								two_dim_arr[rownum][colnum].v_align = 'default';
-							}
-							else if (two_dim_arr_copy[d][e].text == true){
-								console.info(two_dim_arr_copy[d][e]);
-								var rowpointer = rownum - 1;
-								while(rowpointer>0 && typeof two_dim_arr[rowpointer][colnum] == 'undefined'){
-									rowpointer--;
+							two_dim_arr[r][c].colnum = colnum;
+							two_dim_arr[r][c].rownum = rownum;
+							two_dim_arr[r][c].h_align = 'default';
+							two_dim_arr[r][c].v_align = 'default';
+							console.group(c);
+							console.info(two_dim_arr[r][c].text);
+							var rowspan = 1;
+							var colspan = 1;
+							var limit = 10;
+							var counter = 0;
+							var end = false;
+							while(!end){
+								counter++;
+									
+								var rightborder = (two_dim_arr[r][c].text ? two_dim_arr[r][c].text.replace(/.(?!$)/gm, '') : '');
+								console.log(rightborder);
+								if(c+colspan < len && rightborder.match(/\S/)){
+									colspan++;
+									colnum++;
+									two_dim_arr[r][c].colspan = colspan;
+									console.warn('merging cells horizontally', two_dim_arr[r][c].colspan);
+									var addto = two_dim_arr[r][c].text.split(/\n/g);
+									console.log('addto:', addto);
+									var addto_length = addto.length;
+									two_dim_arr[r][c].text = '';
+									for(var a = 0; a < addto_length; a++){
+										console.log(r, a, c, colspan, two_dim_arr[r+a][c+colspan-1]);
+										two_dim_arr[r][c].text += (a!=0 ? '\n' : '') + (addto[a] || '') + (two_dim_arr[r+a][c+colspan-1] ? two_dim_arr[r+a][c+colspan-1].text : '');
+										two_dim_arr[r+a][c+colspan-1] = undefined;
+									}
 								}
-								two_dim_arr[rowpointer][colnum].rowspan = two_dim_arr[rowpointer][colnum].rowspan+1 || 2;
-							}
-							else if(two_dim_arr_copy[d][e].text == false){
-								console.warn(two_dim_arr_copy[d][e]);
-								console.warn(rownum, colnum, two_dim_arr[rownum][colnum-1]);
-								var colpointer = colnum - 1;
-								while(colpointer>0 && typeof two_dim_arr[rownum][colpointer] == 'undefined'){
-									colpointer--;
+								else if(two_dim_arr[r+rowspan]){
+									console.log(r, rowspan, c);
+									var belowborder = '';
+									for(var w = 0; w < colspan; w++){
+										belowborder += (two_dim_arr[r+rowspan][c+w] ? two_dim_arr[r+rowspan][c+w].text : '');
+									}
+									console.log('belowborder:', belowborder);
+									console.log(belowborder.match(/\S/));
+									if(belowborder.match(/\S/)){
+										for(var w = 0; w < colspan; w++){
+											two_dim_arr[r+rowspan][c+w] = undefined;
+										}	
+										rowspan++;
+										two_dim_arr[r][c].rowspan = rowspan;
+										two_dim_arr[r][c].text += '\n' + belowborder;
+									
+									}									
+									else{
+										end = true;
+									}
 								}
-								two_dim_arr[rownum][colpointer].colspan = two_dim_arr[rownum][colpointer].colspan+1 || 2;
+								
+								if(counter>limit){
+									console.error('get me out of that while loop!');
+									end = true;
+								}
 							}
-							else{
-								two_dim_arr[rownum][colnum] = two_dim_arr_copy[d][e];
-								two_dim_arr[rownum][colnum].rownum = rownum;
-								two_dim_arr[rownum][colnum].colnum = colnum;
-								two_dim_arr[rownum][colnum].h_align = 'default';
-								two_dim_arr[rownum][colnum].v_align = 'default';
-								if(v_header[e]==true){two_dim_arr[rownum][colnum].th = true;}
-							}
+							console.groupEnd();
+						}						
+						else{
+							two_dim_arr[r][c] = undefined;
 						}
-						
 					}
+					console.groupEnd();
+					
+					if(!anycell){rownum--;}
 				}
+				console.groupEnd();
 			}
 
 			
