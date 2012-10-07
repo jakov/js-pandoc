@@ -1602,7 +1602,7 @@ console.log('underline:', underline, 'overline:', overline);
 					var colnum = 0;
 					var anycell = false;
 					for(var c = 0; c < width; c ++){
-						if(typeof two_dim_arr[r][c] != 'undefined' && two_dim_arr[r][c].text!=''){
+						if(typeof two_dim_arr[r][c] != 'undefined' && two_dim_arr[r][c].text.match(/\S/)){
 							anycell = true;
 							colnum++;
 							two_dim_arr[r][c].colnum = colnum;
@@ -1610,52 +1610,104 @@ console.log('underline:', underline, 'overline:', overline);
 							two_dim_arr[r][c].h_align = 'default';
 							two_dim_arr[r][c].v_align = 'default';
 							console.group(c);
-							console.info(two_dim_arr[r][c].text);
 							var rowspan = 1;
 							var colspan = 1;
+							var leftspan = 0;
+							var upspan = 0;
 							var limit = 10;
 							var counter = 0;
 							var end = false;
 							while(!end){
+								console.info(two_dim_arr[r-upspan][c-leftspan].text);
 								counter++;
 									
-								var rightborder = (two_dim_arr[r][c].text ? two_dim_arr[r][c].text.replace(/.(?!$)/gm, '') : '');
+								var rightborder = (two_dim_arr[r-upspan][c-leftspan].text ? two_dim_arr[r-upspan][c-leftspan].text.replace(/.(?!$)/gm, '') : '');
 								console.log(rightborder);
 								if(c+colspan < len && rightborder.match(/\S/)){
 									colspan++;
 									colnum++;
-									two_dim_arr[r][c].colspan = colspan;
-									console.warn('merging cells horizontally', two_dim_arr[r][c].colspan);
-									var addto = two_dim_arr[r][c].text.split(/\n/g);
+									two_dim_arr[r-upspan][c-leftspan].colspan = colspan;
+									console.warn('merging cells horizontally', two_dim_arr[r-upspan][c-leftspan].colspan);
+									var addto = two_dim_arr[r-upspan][c-leftspan].text.split(/\n/g);
 									console.log('addto:', addto);
 									var addto_length = addto.length;
-									two_dim_arr[r][c].text = '';
-									for(var a = 0; a < addto_length; a++){
-										console.log(r, a, c, colspan, two_dim_arr[r+a][c+colspan-1]);
-										two_dim_arr[r][c].text += (a!=0 ? '\n' : '') + (addto[a] || '') + (two_dim_arr[r+a][c+colspan-1] ? two_dim_arr[r+a][c+colspan-1].text : '');
-										two_dim_arr[r+a][c+colspan-1] = undefined;
+									two_dim_arr[r-upspan][c-leftspan].text = '';
+									for(var a = 0; a < rowspan; a++){
+										console.log(r-upspan, a, c-leftspan, colspan, two_dim_arr[r-upspan+a][c-leftspan+colspan-1]);
+										two_dim_arr[r-upspan][c-leftspan].text += (a!=0 ? '\n' : '') + (addto[a] || '') + (two_dim_arr[r-upspan+a][c-leftspan+colspan-1] ? two_dim_arr[r-upspan+a][c-leftspan+colspan-1].text : '');
+										two_dim_arr[r-upspan+a][c-leftspan+colspan-1] = undefined;
 									}
 								}
-								else if(two_dim_arr[r+rowspan]){
-									console.log(r, rowspan, c);
+								else if(two_dim_arr[r-upspan+rowspan]){
+									console.log(r-upspan, rowspan, c-leftspan);
 									var belowborder = '';
 									for(var w = 0; w < colspan; w++){
-										belowborder += (two_dim_arr[r+rowspan][c+w] ? two_dim_arr[r+rowspan][c+w].text : '');
+										belowborder += (two_dim_arr[r-upspan+rowspan][c-leftspan+w] ? two_dim_arr[r-upspan+rowspan][c-leftspan+w].text : '');
 									}
 									console.log('belowborder:', belowborder);
 									console.log(belowborder.match(/\S/));
 									if(belowborder.match(/\S/)){
 										for(var w = 0; w < colspan; w++){
-											two_dim_arr[r+rowspan][c+w] = undefined;
+											two_dim_arr[r-upspan+rowspan][c-leftspan+w] = undefined;
 										}	
 										rowspan++;
-										two_dim_arr[r][c].rowspan = rowspan;
-										two_dim_arr[r][c].text += '\n' + belowborder;
+										two_dim_arr[r-upspan][c-leftspan].rowspan = rowspan;
+										two_dim_arr[r-upspan][c-leftspan].text += '\n' + belowborder;
 									
 									}									
 									else{
-										end = true;
+										var leftborder = '';
+										var add = [];
+										for(var a = 0; a < rowspan; a++){
+											add.push(two_dim_arr[r-upspan+a][c-leftspan-1] ? two_dim_arr[r-upspan+a][c-leftspan-1].text : '');
+										}
+										leftborder = add.join('').replace(/.(?!$)/gm, '');
+										console.log('leftborder:', leftborder);
+																		
+										if( c-leftspan > 0 && leftborder.match(/\S/) ){
+											console.error(two_dim_arr[r-upspan][c-leftspan]);
+											var addto = two_dim_arr[r-upspan][c-leftspan].text.split(/\n/g);
+											two_dim_arr[r-upspan][c-leftspan] = undefined;
+											leftspan++;
+											colspan++;
+											two_dim_arr[r-upspan][c-leftspan] = {text:'', v_align:'default', h_align:'default', rownum:rownum, colnum:colnum, rowspan:rowspan, colspan:colspan};
+											console.log('addto:', addto);
+											for(var a = 0; a < rowspan; a++){
+												two_dim_arr[r-upspan][c-leftspan].text += (a!=0 ? '\n' : '') + (add[a] || '') + (addto[a] || '');
+												if(a!=0){two_dim_arr[r-upspan+a][c-leftspan] = undefined;}
+											}
+										}
+										else if(r-upspan-1 > 0 && two_dim_arr[r-upspan-1]){
+											console.log(r-upspan, rowspan, c-leftspan);
+											var upborder = '';
+											for(var w = 0; w < colspan; w++){
+												upborder += (two_dim_arr[r-upspan-1][c-leftspan+w] ? two_dim_arr[r-upspan-1][c-leftspan+w].text : '');
+											}
+											console.log('upborder:', upborder);
+											console.log(upborder.match(/\S/));
+											if(upborder.match(/\S/)){
+												for(var w = 0; w < colspan; w++){
+													if(w!=0){two_dim_arr[r-upspan-1][c-leftspan+w] = undefined;}
+												}
+												upspan++;	
+												rowspan++;
+												two_dim_arr[r-upspan][c-leftspan].rowspan = rowspan;
+												two_dim_arr[r-upspan][c-leftspan] = two_dim_arr[r-upspan+1][c-leftspan];
+												two_dim_arr[r-upspan][c-leftspan].rownum--;
+												two_dim_arr[r-upspan][c-leftspan].text = upborder + '\n' + two_dim_arr[r-upspan][c-leftspan].text;
+												two_dim_arr[r-upspan+1][c-leftspan] = undefined;
+											}
+											else{
+												end = true;												
+											}
+										}
+										else{
+											end = true;
+										}							
 									}
+								}
+								else{
+									end = true;
 								}
 								
 								if(counter>limit){
@@ -1666,12 +1718,12 @@ console.log('underline:', underline, 'overline:', overline);
 							console.groupEnd();
 						}						
 						else{
-							two_dim_arr[r][c] = undefined;
+							two_dim_arr[r][c] = {text:'', h_align:'default', v_align:'default', colnum:colnum, rownum:rownum};
 						}
 					}
 					console.groupEnd();
 					
-					if(!anycell){rownum--;}
+					if(!anycell){rownum--;two_dim_arr[r] = [];}
 				}
 				console.groupEnd();
 			}
