@@ -119,18 +119,18 @@ cell      two
 ----
 ```
 
-These cells should also merge without the `^`:
-
 ```
--
-ffff gggggtttt
-hhhh jjjj  ^  
-kkkkkllll vvvv
-
-ffff gggggtttt
-hhhh  ^    ^    
-kkkkkllll vvvv
--
+--------------
+1111 2222 mmmm
+---- ---- ----
+a a a a a * bb
+          * bb
+* cc dddd * bb
+* cc      * bb
+* cc      * bb
+* cc
+* cc eeeeeeeee
+--------------
 ```
 
 * how to handle the edge case on the bottom?!? Empty cells!

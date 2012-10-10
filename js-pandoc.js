@@ -76,13 +76,27 @@ function Pandoc(text, options = {}) {
 
 	if (!debug) {
 		window.console = {
-			log: function () {},
-			group: function () {},
-			error: function () {},
-			warn: function () {},
-			groupEnd: function () {},
-			clear: function () {},
-			info: function () {}
+			assert: function() {},
+			clear: function() {},
+			count: function() {},
+			debug: function() {},
+			dir: function() {},
+			dirxml: function() {},
+			error: function() {},
+			exception: function() {},
+			group: function() {},
+			groupCollapsed: function() {},
+			groupEnd: function() {},
+			info: function() {},
+			log: function() {},
+			profile: function() {},
+			profileEnd: function() {},
+			table: function() {},
+			time: function() {},
+			timeEnd: function() {},
+			timeStamp: function() {},
+			trace: function() {},
+			warn: function() {},
 		};
 	}
 	
@@ -1332,42 +1346,44 @@ console.log('underline:', underline, 'overline:', overline);
         for(var rownum=0; rownum < theadbodyfootsize; rownum++){
         	//output += '<'+(rownum<theadsize ? 'thead' : rownum<theadbodysize ?  'tbody': 'tfoot')+'>\n';
 			output += (theadsize && rownum==0 ? '<thead>\n' : rownum==theadsize ? '<tbody>\n': rownum==theadsize+tbodysize ? '<tfoot>\n': '');
-			output += '<tr>\n';
-			two_dim_arr_rownum_length = (two_dim_arr[rownum] || []).length;
-			for(var colnum = 0; colnum < two_dim_arr_rownum_length; colnum++){
-				var td = two_dim_arr[rownum][colnum];
-				console.log(td);
-				if( typeof td != 'undefined'){
-					console.log(rownum, colnum, td.text);
-					block = _RunBlockGamut( (td.text||'').replace(/[ ]*$/gm, '') );
-					// if the block only consists of the first paragraph
-					if( (block.match(/^<p>[\s\S]*?<\/p>/) || [''])[0].length == block.length){
-						// strip away the <p>
-						block = block.replace(/^<p>|<\/p>$/g, '');
-					}
-					//tc = (rownum<theadsize || td.th || rownum>=theadsize+tbodysize ? 'th' : 'td');
-					tc = (td.th ? 'th' : 'td');
-					var colspan = (td.colspan>1 ? ' colspan="'+td.colspan+'"': '');
-					var rowspan = (td.rowspan>1 ? ' rowspan="'+td.rowspan+'"': '');
-					var coord = (addcoordinates ? ' class="r'+td.rownum+' c'+td.colnum+' r'+(td.rownum % 2 == 0 ? 'o' : 'e')+' c'+(td.colnum % 2 == 0 ? 'o' : 'e')+(td.colname ? ' c_'+td.colname : '')+(td.rowname ? ' r_'+td.rowname : '')+'"' : '');
-					td.v_align = (td.v_align=='justify' ? 'middle' : td.v_align);
-					var style = '';
-					if( td.h_align!='default' || td.v_align!='default' ){			
-						if(html5){
-							style = ' style="';
-							style += (td.h_align!='default' ? 'text-align:'+td.h_align+';' : '');
-							style += (td.v_align!='default' ? 'vertical-align:'+td.v_align+';' : '');
-							style += '"';
+			if(typeof two_dim_arr[rownum] != 'undefined'){
+				output += '<tr>\n';
+				two_dim_arr_rownum_length = (two_dim_arr[rownum] || []).length;
+				for(var colnum = 0; colnum < two_dim_arr_rownum_length; colnum++){
+					var td = two_dim_arr[rownum][colnum];
+					console.log(td);
+					if( typeof td != 'undefined'){
+						console.log(rownum, colnum, td.text);
+						block = _RunBlockGamut( (td.text||'').replace(/[ ]*$/gm, '') );
+						// if the block only consists of the first paragraph
+						if( (block.match(/^<p>[\s\S]*?<\/p>/) || [''])[0].length == block.length){
+							// strip away the <p>
+							block = block.replace(/^<p>|<\/p>$/g, '');
 						}
-						else {
-							style += (td.h_align!='default' ? ' align="'+td.h_align+'"' : '');
-							style += (td.v_align!='default' ? ' valign="'+td.v_align+'"' : '');					
+						//tc = (rownum<theadsize || td.th || rownum>=theadsize+tbodysize ? 'th' : 'td');
+						tc = (td.th ? 'th' : 'td');
+						var colspan = (td.colspan>1 ? ' colspan="'+td.colspan+'"': '');
+						var rowspan = (td.rowspan>1 ? ' rowspan="'+td.rowspan+'"': '');
+						var coord = (addcoordinates ? ' class="r'+td.rownum+' c'+td.colnum+' r'+(td.rownum % 2 == 0 ? 'o' : 'e')+' c'+(td.colnum % 2 == 0 ? 'o' : 'e')+(td.colname ? ' c_'+td.colname : '')+(td.rowname ? ' r_'+td.rowname : '')+'"' : '');
+						td.v_align = (td.v_align=='justify' ? 'middle' : td.v_align);
+						var style = '';
+						if( td.h_align!='default' || td.v_align!='default' ){			
+							if(html5){
+								style = ' style="';
+								style += (td.h_align!='default' ? 'text-align:'+td.h_align+';' : '');
+								style += (td.v_align!='default' ? 'vertical-align:'+td.v_align+';' : '');
+								style += '"';
+							}
+							else {
+								style += (td.h_align!='default' ? ' align="'+td.h_align+'"' : '');
+								style += (td.v_align!='default' ? ' valign="'+td.v_align+'"' : '');					
+							}
 						}
+						output += '<'+tc+colspan+rowspan+coord+style+'>'+block+'</'+tc+'>\n';
 					}
-					output += '<'+tc+colspan+rowspan+coord+style+'>'+block+'</'+tc+'>\n';
 				}
+				output += '</tr>\n';
 			}
-			output += '</tr>\n';
 			
 			console.log((rownum==theadsize-1 ? '</thead>\n' : rownum==theadsize+tbodysize-1 ? '</tbody>\n' : rownum==theadsize+tbodysize+tfootsize-1 ? '</tfoot>\n' : ''));
 			output += (rownum==theadsize-1 ? '</thead>\n' : rownum==theadsize+tbodysize-1 ? '</tbody>\n' : rownum==theadsize+tbodysize+tfootsize-1 ? '</tfoot>\n' : '');
@@ -1412,7 +1428,8 @@ console.log('underline:', underline, 'overline:', overline);
     + '((?:[^\\n]+\\n\\n?)*)'						// header  header  header
     + '([ ]*[-=]*[ ]+[-= ]*)\\n'					// ------- ------- -------
     + '((?:[^\\n]+\\n\\n?)+?)'						// content content content
-    + '([-= ]*[-=][-= ]*\\n)?'							// ------ ------ ----
+    + '([-= ]*[-=][-= ]*\\n)?'						// ------ ------ ----
+
     + '('
     + 	'[ ]{0,' + md_less_than_tab + '}'
     + 	'\\n'
@@ -1550,6 +1567,7 @@ console.log('underline:', underline, 'overline:', overline);
 				rows = content.replace(/\n$/, '').split( /\n/m );
 				headers = header.replace(/\n$/, '').split( /\n/m );
 				var headers_length = headers.length;
+				console.log('headers_length:', headers_length);
 				
 				rows = [].concat(headers, '', rows);
 				console.log(rows);				
@@ -1574,6 +1592,9 @@ console.log('underline:', underline, 'overline:', overline);
 						srt = position;
 						end = (c+1==len ? undefined : position += columns[c].length+1);
 						cell = rows[r].substring(srt, end);
+						while (cell.length < end-srt) {
+							cell += ' ';
+						}
 						
 						if(r == 0 && columns[c].match(/[=]/)){
 							v_header[c] = true;
@@ -1595,144 +1616,195 @@ console.log('underline:', underline, 'overline:', overline);
 				console.group('merging spaning cells');
 				var height = two_dim_arr.length;
 				var rownum = 0;
+				var rowspan_array = [];
 				for(var r = 0;  r < height; r++){
-					console.group(r);
+					console.group(r, r <= headers_length);
 					rownum++;
 					var width = two_dim_arr[r].length;
 					var colnum = 0;
 					var anycell = false;
-					for(var c = 0; c < width; c ++){
-						if(typeof two_dim_arr[r][c] != 'undefined' && two_dim_arr[r][c].text.match(/\S/)){
-							anycell = true;
-							colnum++;
-							two_dim_arr[r][c].colnum = colnum;
-							two_dim_arr[r][c].rownum = rownum;
-							two_dim_arr[r][c].h_align = 'default';
-							two_dim_arr[r][c].v_align = 'default';
-							console.group(c);
-							var rowspan = 1;
-							var colspan = 1;
-							var leftspan = 0;
-							var upspan = 0;
-							var limit = 10;
-							var counter = 0;
-							var end = false;
-							while(!end){
-								console.info(two_dim_arr[r-upspan][c-leftspan].text);
-								counter++;
-									
-								var rightborder = (two_dim_arr[r-upspan][c-leftspan].text ? two_dim_arr[r-upspan][c-leftspan].text.replace(/.(?!$)/gm, '') : '');
-								console.log(rightborder);
-								if(c+colspan < len && rightborder.match(/\S/)){
-									colspan++;
-									colnum++;
-									two_dim_arr[r-upspan][c-leftspan].colspan = colspan;
-									console.warn('merging cells horizontally', two_dim_arr[r-upspan][c-leftspan].colspan);
-									var addto = two_dim_arr[r-upspan][c-leftspan].text.split(/\n/g);
-									console.log('addto:', addto);
-									var addto_length = addto.length;
-									two_dim_arr[r-upspan][c-leftspan].text = '';
-									for(var a = 0; a < rowspan; a++){
-										console.log(r-upspan, a, c-leftspan, colspan, two_dim_arr[r-upspan+a][c-leftspan+colspan-1]);
-										two_dim_arr[r-upspan][c-leftspan].text += (a!=0 ? '\n' : '') + (addto[a] || '') + (two_dim_arr[r-upspan+a][c-leftspan+colspan-1] ? two_dim_arr[r-upspan+a][c-leftspan+colspan-1].text : '');
-										two_dim_arr[r-upspan+a][c-leftspan+colspan-1] = undefined;
-									}
-								}
-								else if(two_dim_arr[r-upspan+rowspan]){
-									console.log(r-upspan, rowspan, c-leftspan);
-									var belowborder = '';
-									for(var w = 0; w < colspan; w++){
-										belowborder += (two_dim_arr[r-upspan+rowspan][c-leftspan+w] ? two_dim_arr[r-upspan+rowspan][c-leftspan+w].text : '');
-									}
-									console.log('belowborder:', belowborder);
-									console.log(belowborder.match(/\S/));
-									if(belowborder.match(/\S/)){
-										for(var w = 0; w < colspan; w++){
-											two_dim_arr[r-upspan+rowspan][c-leftspan+w] = undefined;
-										}	
-										rowspan++;
-										two_dim_arr[r-upspan][c-leftspan].rowspan = rowspan;
-										two_dim_arr[r-upspan][c-leftspan].text += '\n' + belowborder;
-									
-									}									
-									else{
-										var leftborder = '';
-										var add = [];
+					
+					
+					if(rows[r].match(/^\s*$/)){
+						console.warn('this line is empty; deleting ...');
+						two_dim_arr[r] = undefined;
+						console.groupEnd();
+					}
+					else{
+						for(var c = 0; c < width; c ++){
+							if(typeof two_dim_arr[r][c] == 'object' && typeof two_dim_arr[r][c].text == 'string' && two_dim_arr[r][c].text.match(/\S/)){
+								anycell = true;
+								colnum++;
+								two_dim_arr[r][c].colnum = colnum;
+								two_dim_arr[r][c].rownum = rownum;
+								two_dim_arr[r][c].h_align = 'default';
+								two_dim_arr[r][c].v_align = 'default';
+								console.group(c);
+								var rowspan = 1;
+								var colspan = 1;
+								var leftspan = 0;
+								var upspan = 0;
+								var limit = 20;
+								var counter = 0;
+								var end = false;
+								rowspan_array[c] = 0;
+								while(!end){
+									console.info(two_dim_arr[r-upspan][c-leftspan].text);
+									counter++;
+										
+									var rightborder = (two_dim_arr[r-upspan][c-leftspan].text ? two_dim_arr[r-upspan][c-leftspan].text.replace(/.(?!$)/gm, '') : '');
+									console.log(rightborder);
+									if(c+colspan < len && rightborder.match(/\S/)){
+										colspan++;
+										colnum++;
+										two_dim_arr[r-upspan][c-leftspan].colspan = colspan;
+										rowspan_array[c] = 0;
+										console.warn('merging cells horizontally', two_dim_arr[r-upspan][c-leftspan].colspan);
+										var addto = two_dim_arr[r-upspan][c-leftspan].text.split(/\n/g);
+										console.log('addto:', addto);
+										var addto_length = addto.length;
+										two_dim_arr[r-upspan][c-leftspan].text = '';
 										for(var a = 0; a < rowspan; a++){
-											add.push(two_dim_arr[r-upspan+a][c-leftspan-1] ? two_dim_arr[r-upspan+a][c-leftspan-1].text : '');
+											console.log(r-upspan, a, c-leftspan, colspan, two_dim_arr[r-upspan+a][c-leftspan+colspan-1]);
+											two_dim_arr[r-upspan][c-leftspan].text += (a!=0 ? '\n' : '') + (addto[a] || '') + (two_dim_arr[r-upspan+a][c-leftspan+colspan-1] ? two_dim_arr[r-upspan+a][c-leftspan+colspan-1].text : '');
+											two_dim_arr[r-upspan+a][c-leftspan+colspan-1] = undefined;
 										}
-										leftborder = add.join('').replace(/.(?!$)/gm, '');
-										console.log('leftborder:', leftborder);
-																		
-										if( c-leftspan > 0 && leftborder.match(/\S/) ){
-											console.error(two_dim_arr[r-upspan][c-leftspan]);
-											var addto = two_dim_arr[r-upspan][c-leftspan].text.split(/\n/g);
-											two_dim_arr[r-upspan][c-leftspan] = undefined;
-											leftspan++;
-											colspan++;
-											two_dim_arr[r-upspan][c-leftspan] = {text:'', v_align:'default', h_align:'default', rownum:rownum, colnum:colnum, rowspan:rowspan, colspan:colspan};
-											console.log('addto:', addto);
-											for(var a = 0; a < rowspan; a++){
-												two_dim_arr[r-upspan][c-leftspan].text += (a!=0 ? '\n' : '') + (add[a] || '') + (addto[a] || '');
-												if(a!=0){two_dim_arr[r-upspan+a][c-leftspan] = undefined;}
-											}
-										}
-										else if(r-upspan-1 > 0 && two_dim_arr[r-upspan-1]){
-											console.log(r-upspan, rowspan, c-leftspan);
-											var upborder = '';
-											for(var w = 0; w < colspan; w++){
-												upborder += (two_dim_arr[r-upspan-1][c-leftspan+w] ? two_dim_arr[r-upspan-1][c-leftspan+w].text : '');
-											}
-											console.log('upborder:', upborder);
-											console.log(upborder.match(/\S/));
-											if(upborder.match(/\S/)){
-												for(var w = 0; w < colspan; w++){
-													if(w!=0){two_dim_arr[r-upspan-1][c-leftspan+w] = undefined;}
-												}
-												upspan++;	
-												rowspan++;
-												two_dim_arr[r-upspan][c-leftspan].rowspan = rowspan;
-												two_dim_arr[r-upspan][c-leftspan] = two_dim_arr[r-upspan+1][c-leftspan];
-												two_dim_arr[r-upspan][c-leftspan].rownum--;
-												two_dim_arr[r-upspan][c-leftspan].text = upborder + '\n' + two_dim_arr[r-upspan][c-leftspan].text;
-												two_dim_arr[r-upspan+1][c-leftspan] = undefined;
-											}
-											else{
-												end = true;												
-											}
-										}
-										else{
-											end = true;
-										}							
 									}
-								}
-								else{
-									end = true;
+									else {
+
+										console.log(r-upspan, rowspan, c-leftspan);
+										var belowborder = '';
+										
+										if(two_dim_arr[r-upspan+rowspan]){
+											for(var w = 0; w < colspan; w++){
+												belowborder += (two_dim_arr[r-upspan+rowspan][c-leftspan+w] ? two_dim_arr[r-upspan+rowspan][c-leftspan+w].text : '');
+											}
+											console.log('belowborder:', belowborder);
+											console.log(belowborder.match(/\S/));
+										}
+										if(belowborder.match(/\S/)){
+											for(var w = 0; w < colspan; w++){
+												two_dim_arr[r-upspan+rowspan][c-leftspan+w] = undefined;
+											}	
+											rowspan++;
+											rowspan_array[c] = r;
+											two_dim_arr[r-upspan][c-leftspan].height = rowspan;
+											two_dim_arr[r-upspan][c-leftspan].text += '\n' + belowborder;
+										
+										}									
+										else{
+											var leftborder = '';
+											var add = [];
+											for(var a = 0; a < rowspan; a++){
+												add.push(two_dim_arr[r-upspan+a][c-leftspan-1] ? two_dim_arr[r-upspan+a][c-leftspan-1].text : '');
+											}
+											leftborder = add.join('').replace(/.(?!$)/gm, '');
+											console.log('leftborder:', leftborder);
+																			
+											if( c-leftspan > 0 && leftborder.match(/\S/) ){
+												console.error(two_dim_arr[r-upspan][c-leftspan]);
+												var addto = two_dim_arr[r-upspan][c-leftspan].text.split(/\n/g);
+												two_dim_arr[r-upspan][c-leftspan] = undefined;
+												leftspan++;
+												colspan++;
+												two_dim_arr[r-upspan][c-leftspan] = {text:'', v_align:'default', h_align:'default', rownum:rownum, colnum:colnum, rowspan:rowspan, colspan:colspan};
+												console.log('addto:', addto);
+												for(var a = 0; a < rowspan; a++){
+													two_dim_arr[r-upspan][c-leftspan].text += (a!=0 ? '\n' : '') + (add[a] || '') + (addto[a] || '');
+													if(a!=0){console.error(two_dim_arr[r-upspan+a][c-leftspan].text);two_dim_arr[r-upspan+a][c-leftspan] = undefined;}
+												}
+											}
+											else {
+												var upborder = '';
+												if(r-upspan-1 > 0 && two_dim_arr[r-upspan-1]){
+													console.log(r-upspan, rowspan, c-leftspan);
+													for(var w = 0; w < colspan; w++){
+														upborder += (two_dim_arr[r-upspan-1][c-leftspan+w] ? two_dim_arr[r-upspan-1][c-leftspan+w].text : '');
+													}
+													console.log('upborder:', upborder);
+													console.log(upborder.match(/\S/));
+												}
+												if(upborder.match(/\S/)){
+													for(var w = 0; w < colspan; w++){
+														if(w!=0){two_dim_arr[r-upspan-1][c-leftspan+w] = undefined;}
+													}
+													upspan++;	
+													rowspan++;
+													two_dim_arr[r-upspan][c-leftspan] = two_dim_arr[r-upspan+1][c-leftspan];
+													//two_dim_arr[r-upspan][c-leftspan].rowspan = rowspan;
+													two_dim_arr[r-upspan][c-leftspan].rownum--;
+													two_dim_arr[r-upspan][c-leftspan].text = upborder + '\n' + two_dim_arr[r-upspan][c-leftspan].text;
+													two_dim_arr[r-upspan+1][c-leftspan] = undefined;
+												}
+												else{
+													two_dim_arr[r-upspan][c-leftspan].text += '\n';
+													end = true;
+												}
+											}							
+										}
+									}
+									
+									if(counter>limit){
+										console.error('get me out of that while loop! I don´t want to overflow.');
+										end = true;
+									}
 								}
 								
-								if(counter>limit){
-									console.error('get me out of that while loop!');
-									end = true;
+								if(r <= headers_length || v_header[c-leftspan]){
+									two_dim_arr[r-upspan][c-leftspan].th = true;
+								}
+								console.groupEnd();
+								console.log({arr:two_dim_arr});
+							}
+							else if(two_dim_arr[r][c] != undefined){
+								console.group(c);
+								two_dim_arr[r][c] = {text:'', h_align:'default', v_align:'default', colnum:colnum, rownum:rownum};
+								console.log('empty');
+								console.groupEnd();							
+							}
+							else{
+								two_dim_arr[r][c] = undefined;
+							}
+							
+						}
+						
+						console.groupEnd();
+						
+						console.group('check if any cell, add rowspans');
+						if(anycell){
+							console.log(two_dim_arr[r], rowspan_array);
+							var anycell = false;
+							var two_dim_arr_r_length = two_dim_arr[r].length;
+							for (i=0; i<two_dim_arr_r_length; i++) {
+/*								if(typeof two_dim_arr[r][i] != 'undefined' && typeof two_dim_arr[r][i][0] == 'number' && typeof two_dim_arr[r][i][1] == 'number'){
+									console.log('rowspan coordinates:', two_dim_arr[r][i][0], two_dim_arr[r][i][1]);
+									addrowspan.push();
+									two_dim_arr[two_dim_arr[r][i][0]][two_dim_arr[r][i][1]].rowspan = two_dim_arr[two_dim_arr[r][i][0]][two_dim_arr[r][i][1]].rowspan+1 || 2;
+									two_dim_arr[r][i] = undefined;
+								}
+								else*/
+								//console.log(r, rowspan_array[i], r-rowspan_array[i], two_dim_arr[r][i]);
+								if(rowspan_array[i] && rowspan_array[i]>0 && typeof two_dim_arr[r][i] == 'undefined' && typeof two_dim_arr[rowspan_array[i]][i] != 'undefined' && rowspan_array[i]+two_dim_arr[rowspan_array[i]][i].height >= r){
+									two_dim_arr[rowspan_array[i]][i].rowspan = two_dim_arr[rowspan_array[i]][i].rowspan+1 || 2;
+									console.log(two_dim_arr[rowspan_array[i]][i].rowspan, rowspan_array);
+								}
+								if(typeof two_dim_arr[r][i] != 'undefined' && two_dim_arr[r][i].text != ''){
+									anycell = true;
+									console.log('real cell found');
+									//break;
 								}
 							}
-							console.groupEnd();
-						}						
-						else{
-							two_dim_arr[r][c] = {text:'', h_align:'default', v_align:'default', colnum:colnum, rownum:rownum};
+							
 						}
+						if(!anycell){rownum--;two_dim_arr[r] = undefined;}
+						console.groupEnd();
 					}
-					console.groupEnd();
-					
-					if(!anycell){rownum--;two_dim_arr[r] = [];}
 				}
 				console.groupEnd();
 			}
 
-			
-
-			
-			console.log(two_dim_arr, [first_is_header, height-first_is_header, 0], [captionabove, captionbelow], cols);
-			return _printTable( two_dim_arr, [first_is_header, height-first_is_header, 0], [captionabove, captionbelow], cols);
+			console.log(two_dim_arr, [headers_length, height-headers_length, 0], [captionabove, captionbelow], cols);
+			return _printTable( two_dim_arr, [headers_length, height-headers_length, 0], [captionabove, captionbelow], cols);
 			
         } );
         
