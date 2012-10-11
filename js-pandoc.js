@@ -1658,7 +1658,6 @@ console.log('underline:', underline, 'overline:', overline);
 										colspan++;
 										colnum++;
 										two_dim_arr[r-upspan][c-leftspan].colspan = colspan;
-										rowspan_array[c] = 0;
 										console.warn('merging cells horizontally', two_dim_arr[r-upspan][c-leftspan].colspan);
 										var addto = two_dim_arr[r-upspan][c-leftspan].text.split(/\n/g);
 										console.log('addto:', addto);
@@ -1759,6 +1758,9 @@ console.log('underline:', underline, 'overline:', overline);
 							else if(two_dim_arr[r][c] != undefined){
 								console.group(c);
 								two_dim_arr[r][c] = {text:'', h_align:'default', v_align:'default', colnum:colnum, rownum:rownum};
+								if(r <= headers_length || v_header[c-leftspan]){
+									two_dim_arr[r][c].th = true;
+								}
 								console.log('empty');
 								console.groupEnd();							
 							}
