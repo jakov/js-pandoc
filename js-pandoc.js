@@ -195,6 +195,30 @@ function Pandoc(text, options = {}) {
         return text.replace( md_flag_StripLinkDefinitions_Z, "" );
     }
     
+    var md_reg_VerticalGlue = new RegExp(
+      '[ ]{0,' + md_less_than_tab + '}[.]{3,}\\n'
+    + 	'((?:.*\\n)+)'
+    + '[ ]{0,' + md_less_than_tab + '}[.]{3,}\\n'
+    , "gm" );
+    function _VerticalGlue( text ){
+    	var reg = md_reg_VerticalGlue;
+    	text = text.replace( reg, function( $0, $1 ) {
+    		var output = [];
+    		var columns = $1.split(/\n[.]{3,}\n/);
+    		var width = columns.length;
+    		for(var x = 0; x < width; x++){    			
+    			columns[x] = columns[x].split(/\n/);
+    			var height = columns[x].length;
+	    		for(var y = 0; y < height; y++){
+	    			 output[y] = output[y] || '';
+	    			 output[y] += columns[x][y];
+	    		}  			
+    		}
+    		return output.join('\n');
+        } );
+        return text;
+    }
+    
     // Footnotes
 
     function _StripFootnotes(text) {
@@ -3122,6 +3146,7 @@ function int2roman(number) {
         text = text.replace( /^[ \t]+$/gm, "" );
         text = _StripFootnotes( text );
         text = _StripLinkDefinitions( text );
+        text = _VerticalGlue( text );
         text = _RunBlockGamut( text, false );
         text = _AppendFootnotes( text );
         text = _UnescapeSpecialChars( text );
