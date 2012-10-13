@@ -1,6 +1,7 @@
 # Pandoc Todo List
 
 ## Todo
+* Escaping!
 * Delimited code blocks
 * --section-divs
 * --toc|--table-of-contents
@@ -24,7 +25,7 @@
 	                                         - tasty           
 	-----------------------------------------------------------
 	```
-	+ use `^` if you don't have text to span the lines. If there is nothing else in the 	  same line, the symbol will not be displayed. If the line above is empty, it is 	  treated like an 'arrow', thus only the last `^` in the example is needed.
+	+ use `|` if you don't have text to span the lines. If there is nothing else in the 	  same line, the symbol will not be displayed. Alternatively, you can also use `^` to point to the cell above (use `^^` to point to the next non-empty cell).
 		
 		```
 		-----------------------------------------------------------
@@ -33,9 +34,9 @@
 		Origin   Fruit                   Price   Advantages        
 		======== =============   -------------   ------------------
 		Tropical Bananas                 $1.34   - built-in wrapper
-		^                                        - bright color    
-		^                                                              
-		^        Oranges                 $2.10   - cures scurvy    
+		|                                        - bright color    
+		|                                                              
+		|        Oranges                 $2.10   - cures scurvy    
 		                                         - tasty           
 		-----------------------------------------------------------
 		```

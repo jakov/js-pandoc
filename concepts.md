@@ -118,7 +118,7 @@ It's main advantage is that you can freely use block level elements. This is the
 '               '               ' - tasty            '
 ```
 
-* Pipe Style Tables *should* also accept tabular data for easy pasting from a spreadsheet (Not yet implemented):
+* Pipe Style Tables should also accept tabular data for easy pasting from a spreadsheet (Not yet implemented):
 
 	```
 | Fruit         | Price         | Advantages         |
@@ -142,7 +142,16 @@ It's main advantage is that you can freely use block level elements. This is the
       1     1          1             1
 ```
 
-* rowspan and colspan should be achieved by pointing to that cell with `^` and `<`. In the example, 'Attributes' would span over 'Price' and 'Advantages' and 'Tropical' would span over both of the rows. (Not yet implemented)
+* In simple BlankTables, rowspan and colspan should be achieveable by pointing to the neighboring cell with a single `^` or `<`. In the example, 'Attributes' would span over 'Price' and 'Advantages' and 'Tropical' would span over both of the rows. (Not yet implemented)
+
+```
+                         Attributes                                          <
+Origin   Fruit                   Price   Advantages        
+=======  =============   -------------   -------------------------------------
+Tropical Bananas                 $1.34   has built-in wrapper and bright color
+^        Oranges                 $2.10   cures scurvy and is tasty
+```
+
 
 ```
 -----------------------------------------------------------

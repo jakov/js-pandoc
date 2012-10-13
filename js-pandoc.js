@@ -1420,7 +1420,7 @@ console.log('underline:', underline, 'overline:', overline);
     }
     
     var md_flag_DoSimpleTables = "d0dd78840fdffb4bf1f8d9e65a42d778";
-    var md_reg_DoSimpleTables = new RegExp(
+    /*var md_reg_DoSimpleTables = new RegExp(
       '^'
     + '('
     + 	'[ ]{0,' + md_less_than_tab + '}'
@@ -1439,7 +1439,7 @@ console.log('underline:', underline, 'overline:', overline);
     + 	'(?:Table[:]|[:])[\\S\\s]*?[^\\n]\\n'		// captionbelow
     + ')?'
     + '(?=\\n|' + md_flag_DoTables + ')'			//Stop at final double newline.
-    , "gm" );
+    , "gm" );*/
     var md_reg_DoSimpleTables = new RegExp(
       '^'
     + '('
@@ -1480,10 +1480,14 @@ console.log('underline:', underline, 'overline:', overline);
 			columns = dashes.split(/[ ](?=[-=])/);
 			rows =   content.split( /^\n/m );
 			headers = header.split( /^\n/m );
-
-			if( lineabove == '' ){
+			
+			if( header == '' && linebelow == '' ){
+				return $0;
+			}
+			else if( lineabove == '' ){
 				console.info('simple table');
 				rows = content.split( /^/m );
+				if(linebelow == ''){ rows.pop(); }
 				headers = header.split( /^/m );
 				
 				var first_is_header = (header=='' ? 0 : headers.length);
@@ -1493,12 +1497,13 @@ console.log('underline:', underline, 'overline:', overline);
 				var two_dim_arr = [];
 				var cols = [];
 				var v_header = [];
+				var wholerow_align = [];
 				var ignore = [];
 				for(var c = 0, len = columns.length; c < len; c ++){
 					console.group(c, len, c+1==len);
 					srt = position;
 					end = (c+1==len ? undefined : position += columns[c].length+1);
-					cols.push(columns[c].length+1);
+					cols.push(columns[c].replace(/\s/g, '').length);
 					console.log(srt, columns[c], end, columns[c].match(/[=]/));
 					if(columns[c].match(/[=]/)){
 						v_header[c] = true;
@@ -1532,9 +1537,10 @@ console.log('underline:', underline, 'overline:', overline);
 							arrow = cell.match(/^\s*(\<{1,2}|\^{1,2})\s*$/);
 							automatic_colspan = whiteborder.match(/\S/);
 							//(arrow)
+							var rowpointer = r;
+							var colpointer = c;
 							if(automatic_colspan || ( arrow && (arrow[1] == "<" || arrow[1] == "<<") && c > 0 ) ){
 								console.warn('<< or <');
-								var colpointer = c;
 								while( (typeof two_dim_arr[r][colpointer] == "undefined" || ( !automatic_colspan && arrow[1]=="<<" && String_trim(two_dim_arr[r][colpointer].text)=='' ) ) && colpointer > 0){
 									delete two_dim_arr[r][colpointer];
 									console.warn(r, colpointer, ' cell deleted');
@@ -1558,7 +1564,6 @@ console.log('underline:', underline, 'overline:', overline);
 							}
 							else if(arrow && (arrow[1] == "^" || arrow[1] == "^^") && r > 0){
 								console.warn('^^ or ^');
-								var rowpointer = r;
 								while( (typeof two_dim_arr[rowpointer][c] == "undefined" || ( arrow[1]=="^^" && String_trim(two_dim_arr[rowpointer][c].text)=='' ) ) && rowpointer > 0){
 									delete two_dim_arr[rowpointer][c];
 									console.warn(r, colpointer, ' cell deleted');
@@ -1573,7 +1578,16 @@ console.log('underline:', underline, 'overline:', overline);
 								two_dim_arr[r][c] = {raw:cell, text:cell, h_align:'left', v_align:'default', colnum:c+1, rownum:r+1};
 							}
 							if( typeof two_dim_arr[r][c] !="undefined" && (v_header[c]==true || r < first_is_header)){
-								two_dim_arr[r][c].th = true;	
+								two_dim_arr[r][c].th = true;
+							}
+							if( r == 0 || r < first_is_header ){
+								var left_white = ( two_dim_arr[r][colpointer].text.match(/^(\s*)/)[1] != '' );
+								var right_white = two_dim_arr[r][colpointer].text.replace(/\s*$/, '').length < columns.slice().splice(colpointer, c-colpointer+1).join(' ').replace(/\s*$/, '').length;
+								console.error(left_white, right_white);
+								wholerow_align[colpointer] = (two_dim_arr[r][colpointer].text.match(/\S/) ? (left_white && right_white ? 'center' :  ( right_white ? 'left' : ( left_white ? 'right' : 'default' ) ) ) : 'left' );
+							}
+							if( typeof wholerow_align[colpointer] != 'undefined' && typeof two_dim_arr[r][colpointer] != 'undefined' ){
+								two_dim_arr[r][colpointer].h_align = wholerow_align[colpointer];
 							}
 	
 							ignore[r] = -1;
@@ -1583,7 +1597,8 @@ console.log('underline:', underline, 'overline:', overline);
 					}
 					console.groupEnd();
 				}
-				
+				// Pandoc doesn't pay attention to width in simple tables
+				cols = [];
 			}
 			else{
 				console.warn('multiline table');
