@@ -19,7 +19,7 @@ markdown text.
 
 You can try in your hand.
 
-[Demo page](http://tanakahisateru.github.com/js-markdown-extra/demo.html)
+[Demo page](http://jakov.github.io/js-pandoc/demo.html)
 
 ### How to use ###
 
