@@ -31,7 +31,7 @@
  * @return HTML
  */
 String.prototype.Pandoc = function(options = {}){
-  return Pandoc( this, options);
+	return Pandoc( this, options);
 }
 
 Array.prototype.sum = function() {
@@ -1165,8 +1165,8 @@ console.log('underline:', underline, 'overline:', overline);
 								td.colnum = colnum;
 								td.rownum = rownum;
 								td.height = 1;
-								//td.colspan = z.length+1;
-								td.colspan = ( z.match(/\d+/) ? z*1 : z.length+1 );
+								td.colspan = z.length+1;
+								//td.colspan = ( z.match(/\d+/) ? z*1 : z.length+1 );
 								td.rowspan = 1;
 								td.h_align = h_align;
 								td.v_align = 'default';
